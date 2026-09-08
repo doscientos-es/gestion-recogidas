@@ -2,15 +2,29 @@
 @import '@doscientos/ui/styles.css';
 
 :root {
-  --primary: #123c46;
+  --background: #f7f9f8;
+  --background-foreground: #172b2e;
+  --foreground: #172b2e;
+  --card: #ffffff;
+  --card-foreground: #172b2e;
+  --popover: #ffffff;
+  --popover-foreground: #172b2e;
+  --primary: #0f5963;
   --primary-foreground: #ffffff;
-  --accent: #dff4ef;
-  --accent-foreground: #123c46;
-  --background: #f8faf9;
-  --foreground: #172323;
-  --success: #15805d;
-  --warning: #b36812;
-  --info: #2563a8;
+  --secondary: #edf3f2;
+  --secondary-foreground: #274448;
+  --muted: #eef3f2;
+  --muted-foreground: #687b7d;
+  --accent: #e0f3ef;
+  --accent-foreground: #0d525c;
+  --border: #d7e3e1;
+  --input: #d1dfdc;
+  --ring: #31a0a9;
+  --destructive: #c54d59;
+  --destructive-foreground: #ffffff;
+  --success: #168364;
+  --warning: #b97518;
+  --info: #2382a5;
   --radius: 0.75rem;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   color: var(--foreground);
@@ -36,6 +50,8 @@ body {
 body {
   min-width: 320px;
   margin: 0;
+  background:
+    radial-gradient(circle at 100% 0, rgb(49 160 169 / 0.08), transparent 24rem), var(--background);
 }
 
 #root {
@@ -80,20 +96,25 @@ select {
 }
 .nav-link {
   display: inline-flex;
+  min-height: 2.25rem;
   align-items: center;
   gap: 0.45rem;
+  border: 1px solid var(--border);
   border-radius: 0.65rem;
+  background: var(--background);
   padding: 0.4rem 0.7rem;
-  color: var(--muted-foreground);
+  color: var(--foreground);
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
   transition:
     background-color 0.15s,
+    border-color 0.15s,
     color 0.15s;
 }
 .nav-link:hover,
 .nav-link-active {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
   background: var(--accent);
   color: var(--accent-foreground);
 }
