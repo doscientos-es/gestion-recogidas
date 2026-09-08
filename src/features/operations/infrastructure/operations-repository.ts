@@ -1,6 +1,7 @@
-import { createBrowserSupabaseClient } from '@/shared/lib/supabase/client'
+import { createBrowserSupabaseClient } from '../../../shared/lib/supabase/client'
 
-import type { OperationsState, PickupOrder } from '../application/types'
+import { DRIVER_PAGE_SIZE, type DriverPage } from '../application/driver-queries'
+import type { Driver, OperationsState, PickupOrder } from '../application/types'
 import { createSeedState } from './seed-state'
 
 const storageKey = 'gestion-recogidas-demo-v1'
@@ -24,6 +25,7 @@ function isOperationsState(value: unknown): value is OperationsState {
 function normalizeOperationsState(state: OperationsState): OperationsState {
   return {
     ...state,
+    drivers: state.drivers.map((driver) => ({ ...driver, isExternal: driver.isExternal === true })),
     orders: state.orders.map((item) => {
       const {
         kabikuState: _legacyKabikuState,
@@ -90,4 +92,46 @@ export async function saveOperations(state: OperationsState): Promise<void> {
     .from('demo_workspaces')
     .upsert({ owner_id: ownerId, state }, { onConflict: 'owner_id' })
   if (result.error) throw new Error('No se han podido guardar los cambios en Supabase.')
+}
+
+export async function loadDriversPage(search: string, page: number): Promise<DriverPage> {
+  const client = createBrowserSupabaseClient()
+  await currentUserId()
+  const result = await client.rpc('get_drivers_page', {
+    requested_page: page,
+    requested_page_size: DRIVER_PAGE_SIZE,
+    search_text: search.trim(),
+  })
+  if (result.error) throw new Error('No se han podido recuperar los conductores.')
+
+  const payload = result.data as Record<string, unknown> | null
+  const drivers = Array.isArray(payload?.drivers)
+    ? payload.drivers.map(asDriver).filter((driver): driver is Driver => driver !== undefined)
+    : []
+  const total = typeof payload?.total === 'number' ? payload.total : 0
+  const pageCount = Math.max(1, Math.ceil(total / DRIVER_PAGE_SIZE))
+  const responsePage = typeof payload?.page === 'number' ? payload.page : page
+
+  return { drivers, page: Math.min(Math.max(1, responsePage), pageCount), pageCount, total }
+}
+
+function asDriver(value: unknown): Driver | undefined {
+  if (!value || typeof value !== 'object') return undefined
+  const candidate = value as Record<string, unknown>
+  if (
+    typeof candidate.id !== 'string' ||
+    typeof candidate.name !== 'string' ||
+    typeof candidate.phone !== 'string' ||
+    typeof candidate.email !== 'string' ||
+    typeof candidate.initials !== 'string'
+  )
+    return undefined
+  return {
+    id: candidate.id,
+    name: candidate.name,
+    phone: candidate.phone,
+    email: candidate.email,
+    initials: candidate.initials,
+    isExternal: candidate.isExternal === true,
+  }
 }

@@ -59,6 +59,17 @@ describe('DriversPage', () => {
     expect(screen.getByText('Externo')).toBeInTheDocument()
   })
 
+  it('filters drivers by name', async () => {
+    const user = userEvent.setup()
+    render(<DriversPage />)
+
+    await user.type(screen.getByLabelText('Buscar conductores'), 'marc')
+    await user.click(screen.getByRole('button', { name: 'Buscar' }))
+
+    expect(screen.getByText('Marc Soler')).toBeInTheDocument()
+    expect(screen.queryByText('Laura Vidal')).not.toBeInTheDocument()
+  })
+
   it('creates an external driver from the form', async () => {
     const user = userEvent.setup()
     render(<DriversPage />)

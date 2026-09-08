@@ -11,10 +11,12 @@ import {
   PageHeaderTitle,
 } from '@doscientos/ui'
 import { Link } from '@tanstack/react-router'
-import { ArrowLeft, Pencil, Phone, Plus, Trash2, X } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import { ArrowLeft, Pencil, Phone, Plus, Search, Trash2, X } from 'lucide-react'
+import { useEffect, useState, type FormEvent } from 'react'
 
 import { useOperations } from '../application/operations-context'
+import { paginateDrivers, type DriverPage } from '../application/driver-queries'
+import { loadDriversPage } from '../infrastructure/operations-repository'
 import { defaultTravelSearch } from '../application/travel-search'
 import type { Driver } from '../application/types'
 
@@ -32,9 +34,49 @@ function initialsFor(name: string): string {
 }
 
 export function DriversPage() {
-  const { state, addDriver, updateDriver, deleteDriver } = useOperations()
+  const { state, mode, addDriver, updateDriver, deleteDriver } = useOperations()
   const [creating, setCreating] = useState(false)
   const [editingId, setEditingId] = useState<string>()
+  const [searchDraft, setSearchDraft] = useState('')
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [driversRevision, setDriversRevision] = useState(0)
+  const [remotePage, setRemotePage] = useState<{ key: string; value: DriverPage }>()
+  const [remoteError, setRemoteError] = useState<string>()
+  const localPage = paginateDrivers(state.drivers, search, page)
+  const remoteKey = `${search}\u0000${page}\u0000${driversRevision}`
+
+  useEffect(() => {
+    if (mode !== 'supabase') {
+      setRemotePage(undefined)
+      setRemoteError(undefined)
+      return
+    }
+    let active = true
+    setRemoteError(undefined)
+    void loadDriversPage(search, page)
+      .then((result) => {
+        if (active) setRemotePage({ key: remoteKey, value: result })
+      })
+      .catch((reason: unknown) => {
+        if (active)
+          setRemoteError(
+            reason instanceof Error ? reason.message : 'No se han podido recuperar los conductores.',
+          )
+      })
+    return () => {
+      active = false
+    }
+  }, [mode, page, remoteKey, search])
+
+  const driversPage =
+    mode === 'supabase' && remotePage?.key === remoteKey ? remotePage.value : localPage
+
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setPage(1)
+    setSearch(searchDraft)
+  }
 
   return (
     <div className="space-y-6">
@@ -64,19 +106,40 @@ export function DriversPage() {
         <DriverForm
           onSubmit={(driver) => {
             addDriver(driver)
+            setDriversRevision((value) => value + 1)
             setCreating(false)
           }}
           onCancel={() => setCreating(false)}
         />
       ) : null}
+      <form className="flex flex-wrap items-end gap-2" onSubmit={submitSearch}>
+        <div className="min-w-60 flex-1">
+          <label className="field-label" htmlFor="driver-search">
+            Buscar conductores
+          </label>
+          <input
+            id="driver-search"
+            className="field-control w-full"
+            value={searchDraft}
+            placeholder="Nombre, teléfono o email"
+            onChange={(event) => setSearchDraft(event.target.value)}
+          />
+        </div>
+        <Button type="submit" variant="outline">
+          <Search aria-hidden />
+          Buscar
+        </Button>
+      </form>
+      {remoteError ? <p className="text-destructive text-sm">{remoteError}</p> : null}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {state.drivers.map((driver) =>
+        {driversPage.drivers.map((driver) =>
           editingId === driver.id ? (
             <DriverForm
               key={driver.id}
               driver={driver}
               onSubmit={(patch) => {
                 updateDriver(driver.id, patch)
+                setDriversRevision((value) => value + 1)
                 setEditingId(undefined)
               }}
               onCancel={() => setEditingId(undefined)}
@@ -108,7 +171,10 @@ export function DriversPage() {
                       size="sm"
                       aria-label={`Eliminar ${driver.name}`}
                       onPress={() => {
-                        if (window.confirm(`¿Eliminar a ${driver.name}?`)) deleteDriver(driver.id)
+                        if (window.confirm(`¿Eliminar a ${driver.name}?`)) {
+                          deleteDriver(driver.id)
+                          setDriversRevision((value) => value + 1)
+                        }
                       }}
                     >
                       <Trash2 aria-hidden className="size-4" />
@@ -127,7 +193,44 @@ export function DriversPage() {
           ),
         )}
       </div>
+      {driversPage.total === 0 ? (
+        <p className="text-muted-foreground py-8 text-center text-sm">
+          No hay conductores que coincidan con la búsqueda.
+        </p>
+      ) : (
+        <DriverPagination page={driversPage.page} pageCount={driversPage.pageCount} onChange={setPage} />
+      )}
     </div>
+  )
+}
+
+function DriverPagination({
+  page,
+  pageCount,
+  onChange,
+}: {
+  page: number
+  pageCount: number
+  onChange: (page: number) => void
+}) {
+  if (pageCount <= 1) return null
+  return (
+    <nav aria-label="Paginación de conductores" className="flex items-center justify-center gap-3">
+      <Button type="button" variant="outline" onPress={() => onChange(page - 1)} isDisabled={page === 1}>
+        Anterior
+      </Button>
+      <span className="text-muted-foreground text-sm">
+        Página {page} de {pageCount}
+      </span>
+      <Button
+        type="button"
+        variant="outline"
+        onPress={() => onChange(page + 1)}
+        isDisabled={page === pageCount}
+      >
+        Siguiente
+      </Button>
+    </nav>
   )
 }
 

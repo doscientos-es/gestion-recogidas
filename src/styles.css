@@ -442,7 +442,11 @@ select {
   display: grid;
   gap: 0.35rem;
   border-radius: 0.9rem;
-  background: linear-gradient(135deg, var(--muted), color-mix(in srgb, var(--accent) 45%, var(--muted)));
+  background: linear-gradient(
+    135deg,
+    var(--muted),
+    color-mix(in srgb, var(--accent) 45%, var(--muted))
+  );
   padding: 0.35rem;
 }
 .detail-summary-item {

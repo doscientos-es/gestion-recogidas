@@ -64,37 +64,33 @@ export function OrderDetailCard({ order }: { order: PickupOrder }) {
         )}
         {order.status === 'pending_assignment' || order.status === 'assigned' ? (
           <div className="driver-assignment">
-            <div>
-              <h3 className="text-sm font-semibold">
-                {order.status === 'assigned' ? 'Cambiar conductor' : 'Asignar conductor'}
-              </h3>
-              <p className="text-muted-foreground mt-1 text-xs">
-                Selecciona quién realizará este viaje.
-              </p>
-            </div>
             <div className="driver-assignment-actions">
               <SelectField
                 id="order-driver"
-                label="Conductor"
+                label={order.status === 'assigned' ? 'Cambiar conductor' : 'Asignar conductor'}
                 value={driverId}
                 onChange={setDriverId}
                 options={state.drivers.map((item) => [item.id, item.name])}
               />
-            </div>
-            <Button
-              isDisabled={!driverId || assigning}
+              <Button
+                isDisabled={
+                  !driverId ||
+                  assigning ||
+                  (order.status === 'assigned' && driverId === order.driverId)
+                }
                 size="sm"
-              onPress={() => {
-                setAssigning(true)
-                void assign(order.id, driverId, '').finally(() => setAssigning(false))
-              }}
-            >
-              {assigning
-                ? 'Guardando…'
-                : order.status === 'assigned'
-                  ? 'Guardar cambio'
-                  : 'Asignar conductor'}
-            </Button>
+                onPress={() => {
+                  setAssigning(true)
+                  void assign(order.id, driverId, '').finally(() => setAssigning(false))
+                }}
+              >
+                {assigning
+                  ? 'Guardando…'
+                  : order.status === 'assigned'
+                    ? 'Guardar cambio'
+                    : 'Asignar conductor'}
+              </Button>
+            </div>
           </div>
         ) : null}
         {driver ? <CommunicationActions order={order} driver={driver} /> : null}
