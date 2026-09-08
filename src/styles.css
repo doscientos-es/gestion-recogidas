@@ -187,10 +187,6 @@ select {
   gap: 0.75rem;
   min-width: 0;
   overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 0.9rem;
-  background: var(--background);
-  padding: 0.9rem;
 }
 .inbox-toolbar {
   display: grid;
@@ -300,6 +296,26 @@ select {
   font-size: 0.78rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+@media (min-width: 1024px) {
+  .inbox-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+  }
+  .inbox-list {
+    border: 1px solid var(--border);
+    border-radius: 0.9rem;
+    background: var(--background);
+    padding: 0.9rem;
+  }
+  .inbox-detail {
+    min-width: 0;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+  }
+  .inbox-detail > * {
+    min-height: 100%;
+  }
 }
 .trip-detail-drawer {
   height: min(85svh, 52rem);

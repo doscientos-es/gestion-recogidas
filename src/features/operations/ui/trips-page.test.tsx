@@ -10,7 +10,10 @@ import { TripsPage } from './trips-page'
 
 // Vitest no expone `globals`, así que el auto-cleanup de testing-library nunca se
 // registra: sin esto cada test apila su render sobre el DOM de los anteriores.
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
 // jsdom no implementa scrollIntoView; el efecto de la página lo llama al enfocar una fila.
 beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn()
@@ -76,6 +79,18 @@ function Harness({ initial }: { initial?: Partial<TravelSearch> }) {
   )
 }
 
+function mockDesktopLayout() {
+  const mediaQueryList = {
+    matches: true,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  } as unknown as MediaQueryList
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn(() => mediaQueryList),
+  )
+}
+
 describe('TripsPage - navegación por teclado', () => {
   it('mantiene la lista como contenido principal cuando no hay viaje seleccionado', () => {
     render(<Harness />)
@@ -89,6 +104,14 @@ describe('TripsPage - navegación por teclado', () => {
     await user.click(screen.getByRole('button', { name: /Cliente Uno/ }))
     const detail = within(screen.getByRole('dialog', { name: 'Detalle del viaje' }))
     expect(detail.getByText('REC-1')).toBeInTheDocument()
+  })
+
+  it('muestra el detalle como segunda columna en escritorio', () => {
+    mockDesktopLayout()
+    render(<Harness initial={{ selected: 'ord-1' }} />)
+
+    expect(screen.getByLabelText('Detalle del viaje')).toContainElement(screen.getByText('REC-1'))
+    expect(screen.queryByRole('dialog', { name: 'Detalle del viaje' })).not.toBeInTheDocument()
   })
 
   it('cierra el drawer y deselecciona el viaje', async () => {

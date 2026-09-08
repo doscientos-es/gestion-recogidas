@@ -10,12 +10,13 @@ import {
   Popover,
 } from '@doscientos/ui'
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { ChevronLeft, ChevronRight, Search, SlidersHorizontal } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Inbox, Search, SlidersHorizontal } from 'lucide-react'
 import {
   useEffect,
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type ChangeEvent,
   type FormEvent,
   type KeyboardEvent,
@@ -34,6 +35,21 @@ const statusTabs = [
   { value: 'pending_assignment', label: 'Por asignar' },
   { value: 'assigned', label: 'Asignados' },
 ] as const satisfies readonly { value: TravelSearch['status']; label: string }[]
+
+const desktopLayoutQuery = '(min-width: 1024px)'
+
+function useDesktopLayout() {
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      const media = window.matchMedia?.(desktopLayoutQuery)
+      if (!media) return () => undefined
+      media.addEventListener('change', onStoreChange)
+      return () => media.removeEventListener('change', onStoreChange)
+    },
+    () => window.matchMedia?.(desktopLayoutQuery).matches ?? false,
+    () => false,
+  )
+}
 
 export function TripsRoute() {
   const search = useSearch({ from: '/viajes' })
@@ -84,6 +100,7 @@ export function TripsPage({
   onSearchChange: (update: Partial<TravelSearch>) => void
 }) {
   const { state } = useOperations()
+  const isDesktopLayout = useDesktopLayout()
   // El texto escrito se mantiene en un estado local y viaja a la URL con retardo:
   // así no se dispara una consulta por pulsación de tecla.
   const [queryDraft, setQueryDraft] = useState(search.q)
@@ -316,8 +333,28 @@ export function TripsPage({
             onPageChange={(page) => onSearchChange({ page, selected: '' })}
           />
         </section>
+        {isDesktopLayout ? (
+          <section className="inbox-detail" aria-label="Detalle del viaje">
+            {selected ? (
+              <Card className="border-primary/15 overflow-hidden">
+                <OrderDetailCard key={selected.id} order={selected} />
+              </Card>
+            ) : (
+              <Card className="h-full">
+                <CardContent className="flex h-full flex-col items-center justify-center gap-2 p-10 text-center">
+                  <Inbox aria-hidden className="text-muted-foreground size-8" />
+                  <p className="font-semibold">Ningún viaje seleccionado</p>
+                  <p className="text-muted-foreground text-sm">
+                    Elige un viaje de la lista para ver su detalle, editarlo y gestionar su
+                    asignación.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </section>
+        ) : null}
       </div>
-      {selected ? (
+      {selected && !isDesktopLayout ? (
         <DetailDrawer
           isOpen
           side="bottom"
