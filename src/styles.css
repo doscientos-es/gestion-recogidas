@@ -1,0 +1,378 @@
+@import 'tailwindcss';
+@import '@doscientos/ui/styles.css';
+
+:root {
+  --primary: #123c46;
+  --primary-foreground: #ffffff;
+  --accent: #dff4ef;
+  --accent-foreground: #123c46;
+  --background: #f8faf9;
+  --foreground: #172323;
+  --success: #15805d;
+  --warning: #b36812;
+  --info: #2563a8;
+  --radius: 0.75rem;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color: var(--foreground);
+  background: var(--background);
+}
+
+@theme inline {
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+button,
+a,
+input,
+select {
+  outline-offset: 3px;
+}
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  width: 16.5rem;
+  border-right: 1px solid var(--border);
+  background: color-mix(in srgb, var(--background) 94%, white);
+}
+.brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--foreground);
+  text-decoration: none;
+}
+.brand-mark > span:first-child {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border-radius: 0.7rem;
+  background: var(--primary);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.brand-mark > span:last-child {
+  display: grid;
+  line-height: 1.05;
+}
+.brand-mark strong {
+  font-size: 0.9rem;
+}
+.brand-mark small {
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+}
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  border-radius: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+.nav-link:hover,
+.nav-link-active {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.nav-link svg {
+  width: 1rem;
+  height: 1rem;
+}
+.sidebar-footer {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  left: 1rem;
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  background: var(--background);
+}
+.sidebar-footer div {
+  display: grid;
+  gap: 0.15rem;
+  font-size: 0.7rem;
+}
+.sidebar-footer small {
+  color: var(--muted-foreground);
+}
+.status-pulse {
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-top: 0.2rem;
+  flex: none;
+  border-radius: 999px;
+  background: var(--success);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 14%, transparent);
+}
+.mobile-nav {
+  display: flex;
+  max-width: 65vw;
+  gap: 0.2rem;
+  overflow-x: auto;
+}
+.mobile-nav a {
+  white-space: nowrap;
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+  text-decoration: none;
+}
+.mobile-nav-active {
+  background: var(--accent);
+  color: var(--accent-foreground) !important;
+}
+.operation-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--destructive) 30%, var(--border));
+  background: color-mix(in srgb, var(--destructive) 8%, var(--background));
+  padding: 0.65rem 1rem;
+  color: var(--destructive);
+  font-size: 0.8rem;
+}
+.operation-alert button {
+  flex: none;
+  font-weight: 700;
+  text-decoration: underline;
+}
+.inbox-card {
+  border-color: color-mix(in srgb, var(--info) 25%, var(--border));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--info) 5%, white), var(--background));
+}
+.icon-link {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  color: var(--foreground);
+}
+.icon-link svg {
+  width: 1rem;
+}
+.activity-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: 0.3rem;
+  flex: none;
+  border-radius: 999px;
+  background: var(--info);
+}
+.activity-dot-success {
+  background: var(--success);
+}
+.activity-dot-warning {
+  background: var(--warning);
+}
+.flow-list {
+  display: grid;
+  gap: 0.85rem;
+}
+.flow-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+}
+.flow-list span {
+  display: grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.field-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.field-control {
+  min-height: 2.25rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--background);
+  padding: 0.45rem 0.65rem;
+  font-size: 0.85rem;
+}
+.order-row {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: var(--background);
+  padding: 1rem;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.order-row:hover,
+.order-row-active {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+  box-shadow: 0 8px 24px rgb(18 60 70 / 0.08);
+}
+.action-link {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--background);
+  padding: 0.45rem 0.75rem;
+  color: var(--foreground);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.action-link:hover {
+  background: var(--muted);
+}
+.action-link svg {
+  width: 1rem;
+  height: 1rem;
+}
+.action-link-whatsapp {
+  border-color: #a6dfc0;
+  background: #edfbf3;
+  color: #11663a;
+}
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(10rem, 1fr));
+  gap: 0.65rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+.calendar-day {
+  min-height: 27rem;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--background) 80%, transparent);
+  padding: 0.6rem;
+}
+.calendar-day > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.3rem 0.8rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+.calendar-day > header strong {
+  display: grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--foreground);
+}
+.calendar-day-today {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent) 45%, var(--background));
+}
+.calendar-day-today > header strong {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.calendar-event {
+  box-shadow: 0 4px 15px rgb(18 60 70 / 0.06);
+}
+.kabiku-banner {
+  border-color: color-mix(in srgb, var(--warning) 25%, var(--border));
+  background: color-mix(in srgb, var(--warning) 5%, var(--background));
+}
+.integration-logo {
+  display: grid;
+  width: 2.6rem;
+  height: 2.6rem;
+  place-items: center;
+  flex: none;
+  border-radius: 0.7rem;
+  background: #242424;
+  color: #fff;
+  font-weight: 800;
+}
+.plate {
+  width: fit-content;
+  border: 2px solid #1e293b;
+  border-left: 0.8rem solid #2454a6;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: #fff;
+  color: #111827;
+  font-family: ui-monospace, monospace;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.progress-track {
+  height: 0.4rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--muted);
+}
+.progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+@media (min-width: 640px) {
+  .filter-row {
+    flex-direction: row;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
