@@ -41,10 +41,7 @@ function sendJson(response: ServerResponse, status: number, body: object) {
   response.end(JSON.stringify(body))
 }
 
-export default async function handler(
-  request: IncomingMessage,
-  response: ServerResponse,
-) {
+export default async function handler(request: IncomingMessage, response: ServerResponse) {
   if (request.method !== 'POST') {
     response.setHeader('Allow', 'POST')
     sendJson(response, 405, { error: 'Método no permitido' })

@@ -173,9 +173,10 @@ select {
   font-weight: 700;
 }
 .inbox-grid {
-  display: grid;
-  gap: 1.25rem;
-  align-items: start;
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
 }
 .inbox-list {
   display: flex;
@@ -292,20 +293,12 @@ select {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.inbox-detail {
-  min-width: 0;
-}
-/* A partir de escritorio la pantalla no scrollea: cada columna gestiona el suyo. */
+/* La lista concentra el espacio disponible; el detalle se muestra en un drawer modal. */
 @media (min-width: 1024px) {
   .inbox-grid {
-    flex: 1;
     min-height: 0;
-    align-items: stretch;
-    grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
-    grid-template-rows: minmax(0, 1fr);
   }
-  .inbox-list,
-  .inbox-detail {
+  .inbox-list {
     height: 100%;
     min-height: 0;
   }
@@ -318,14 +311,10 @@ select {
     overflow-y: auto;
     padding-right: 0.25rem;
   }
-  .inbox-detail {
-    min-height: 0;
-    overflow-y: auto;
-    padding-right: 0.25rem;
-  }
-  .inbox-detail > * {
-    min-height: 100%;
-  }
+}
+.trip-detail-drawer {
+  height: min(85svh, 52rem);
+  border-radius: 1.25rem 1.25rem 0 0;
 }
 .pagination-bar {
   display: flex;

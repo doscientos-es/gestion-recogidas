@@ -1,4 +1,4 @@
-import { AppShell, AppShellContent, AppShellHeader, AppShellMain, Button } from '@doscientos/ui'
+import { AppShell, AppShellContent, AppShellHeader, AppShellMain, IconButton } from '@doscientos/ui'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { Plus, RefreshCw, Users, X } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -20,18 +20,20 @@ export function AppFrame({ children }: { children: ReactNode }) {
               <small>Automática</small>
             </span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {loading || saving ? (
-              <span className="text-muted-foreground text-xs">
-                {loading ? 'Cargando…' : 'Guardando…'}
-              </span>
+              <output className="sr-only">{loading ? 'Cargando…' : 'Guardando…'}</output>
             ) : null}
-            <Button variant="ghost" size="sm" onPress={() => void refresh()} isDisabled={loading}>
+            <IconButton
+              label={loading ? 'Actualizando viajes…' : 'Actualizar viajes'}
+              variant="ghost"
+              onPress={() => void refresh()}
+              isDisabled={loading}
+            >
               <RefreshCw aria-hidden />
-              Actualizar
-            </Button>
-            <Button
-              size="sm"
+            </IconButton>
+            <IconButton
+              label={composing ? 'Cerrar alta de viaje' : 'Nuevo viaje'}
               onPress={() =>
                 void navigate({
                   to: '/viajes',
@@ -40,16 +42,14 @@ export function AppFrame({ children }: { children: ReactNode }) {
               }
             >
               {composing ? <X aria-hidden /> : <Plus aria-hidden />}
-              {composing ? 'Cerrar' : 'Nuevo viaje'}
-            </Button>
-            <Link
-              to="/conductores"
-              activeProps={{ className: 'nav-link-active' }}
-              className="nav-link"
+            </IconButton>
+            <IconButton
+              label="Gestionar conductores"
+              variant="outline"
+              onPress={() => void navigate({ to: '/conductores' })}
             >
               <Users aria-hidden />
-              Conductores
-            </Link>
+            </IconButton>
           </div>
         </AppShellHeader>
         {error ? (

@@ -12,6 +12,19 @@ import {
 } from './workflow'
 
 describe('pickup workflow', () => {
+  it('provides a substantial and internally consistent demo dataset', () => {
+    const state = createSeedState()
+    expect(state.orders).toHaveLength(120)
+    expect(state.drivers).toHaveLength(15)
+    expect(state.vehicles).toHaveLength(13)
+    expect(state.activity.length).toBeGreaterThanOrEqual(10)
+
+    for (const order of state.orders.filter((item) => item.status === 'assigned')) {
+      expect(state.drivers.some((driver) => driver.id === order.driverId)).toBe(true)
+      expect(state.vehicles.some((vehicle) => vehicle.id === order.vehicleId)).toBe(true)
+    }
+  })
+
   it('assigns a pickup to a driver', () => {
     const state = assignOrder(
       createSeedState(),

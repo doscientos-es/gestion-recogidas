@@ -4,7 +4,7 @@ import { DRIVER_PAGE_SIZE, type DriverPage } from '../application/driver-queries
 import type { Driver, OperationsState, PickupOrder } from '../application/types'
 import { createSeedState } from './seed-state'
 
-const storageKey = 'gestion-recogidas-demo-v1'
+const storageKey = 'gestion-recogidas-demo-v2'
 
 export function dataMode(): 'demo' | 'supabase' {
   return import.meta.env.VITE_DATA_MODE === 'supabase' ? 'supabase' : 'demo'

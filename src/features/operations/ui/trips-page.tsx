@@ -2,13 +2,15 @@ import {
   Button,
   Card,
   CardContent,
+  DetailDrawer,
+  DetailDrawerBody,
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
   Popover,
 } from '@doscientos/ui'
-import { ChevronLeft, ChevronRight, Inbox, Search, SlidersHorizontal } from 'lucide-react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
+import { ChevronLeft, ChevronRight, Search, SlidersHorizontal } from 'lucide-react'
 import {
   useEffect,
   useMemo,
@@ -40,7 +42,10 @@ export function TripsRoute() {
     <TripsPage
       search={search}
       onSearchChange={(update: Partial<TravelSearch>) =>
-        void navigate({ to: '/viajes', search: (previous) => ({ ...previous, ...update }) })
+        void navigate({
+          to: '/viajes',
+          search: (previous) => ({ ...defaultTravelSearch, ...previous, ...update }),
+        })
       }
     />
   )
@@ -285,6 +290,8 @@ export function TripsPage({
                     onClick={() => onSearchChange({ selected: order.id })}
                     onKeyDown={handleRowKeys}
                     aria-current={selected?.id === order.id}
+                    aria-haspopup="dialog"
+                    aria-expanded={selected?.id === order.id}
                     className={`inbox-row ${selected?.id === order.id ? 'inbox-row-active' : ''}`}
                   >
                     <span className="inbox-row-top">
@@ -309,23 +316,22 @@ export function TripsPage({
             onPageChange={(page) => onSearchChange({ page, selected: '' })}
           />
         </section>
-        <section className="inbox-detail" aria-label="Detalle del viaje">
-          {selected ? (
-            <OrderDetailCard key={selected.id} order={selected} />
-          ) : (
-            <Card className="h-full">
-              <CardContent className="flex h-full flex-col items-center justify-center gap-2 p-10 text-center">
-                <Inbox aria-hidden className="text-muted-foreground size-8" />
-                <p className="font-semibold">Ningún viaje seleccionado</p>
-                <p className="text-muted-foreground text-sm">
-                  Elige un viaje de la lista para ver su detalle, editarlo y gestionar su
-                  asignación.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </section>
       </div>
+      {selected ? (
+        <DetailDrawer
+          isOpen
+          side="bottom"
+          className="trip-detail-drawer"
+          dialogProps={{ 'aria-label': 'Detalle del viaje' }}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) onSearchChange({ selected: '' })
+          }}
+        >
+          <DetailDrawerBody className="py-4">
+            <OrderDetailCard key={selected.id} order={selected} />
+          </DetailDrawerBody>
+        </DetailDrawer>
+      ) : null}
     </div>
   )
 }

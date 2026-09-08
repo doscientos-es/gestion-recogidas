@@ -77,44 +77,57 @@ function Harness({ initial }: { initial?: Partial<TravelSearch> }) {
 }
 
 describe('TripsPage - navegación por teclado', () => {
-  it('muestra el mensaje de bienvenida cuando no hay viaje seleccionado', () => {
+  it('mantiene la lista como contenido principal cuando no hay viaje seleccionado', () => {
     render(<Harness />)
-    expect(screen.getByText('Ningún viaje seleccionado')).toBeInTheDocument()
+    expect(screen.getByLabelText('Listado de viajes')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Detalle del viaje' })).not.toBeInTheDocument()
   })
 
-  it('selecciona un viaje al pulsar su fila y sustituye la bienvenida', async () => {
+  it('abre el detalle seleccionado en un drawer', async () => {
     const user = userEvent.setup()
     render(<Harness />)
     await user.click(screen.getByRole('button', { name: /Cliente Uno/ }))
-    expect(screen.queryByText('Ningún viaje seleccionado')).not.toBeInTheDocument()
-    const detail = within(screen.getByLabelText('Detalle del viaje'))
+    const detail = within(screen.getByRole('dialog', { name: 'Detalle del viaje' }))
     expect(detail.getByText('REC-1')).toBeInTheDocument()
   })
 
-  it('ArrowDown mueve el foco y la selección a la fila siguiente', async () => {
+  it('cierra el drawer y deselecciona el viaje', async () => {
     const user = userEvent.setup()
     render(<Harness initial={{ selected: 'ord-1' }} />)
+
+    await user.click(screen.getByRole('button', { name: 'Cerrar' }))
+
+    expect(screen.queryByRole('dialog', { name: 'Detalle del viaje' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Cliente Uno/ })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    )
+  })
+
+  it('ArrowDown selecciona la siguiente fila y abre su drawer de detalle', async () => {
+    const user = userEvent.setup()
+    render(<Harness />)
     screen.getByRole('button', { name: /Cliente Uno/ }).focus()
     await user.keyboard('{ArrowDown}')
-    const rowTwo = screen.getByRole('button', { name: /Cliente Dos/ })
-    expect(rowTwo).toHaveFocus()
-    expect(rowTwo).toHaveAttribute('aria-current', 'true')
+    const detail = within(screen.getByRole('dialog', { name: 'Detalle del viaje' }))
+    expect(detail.getByText('REC-2')).toBeInTheDocument()
   })
 
-  it('End mueve el foco a la última fila sin dar la vuelta', async () => {
+  it('End selecciona la última fila y abre su drawer de detalle', async () => {
     const user = userEvent.setup()
-    render(<Harness initial={{ selected: 'ord-1' }} />)
+    render(<Harness />)
     screen.getByRole('button', { name: /Cliente Uno/ }).focus()
     await user.keyboard('{End}')
-    expect(screen.getByRole('button', { name: /Cliente Tres/ })).toHaveFocus()
+    const detail = within(screen.getByRole('dialog', { name: 'Detalle del viaje' }))
+    expect(detail.getByText('REC-3')).toBeInTheDocument()
   })
 
-  it('Escape deselecciona el viaje y vuelve a mostrar la bienvenida', async () => {
+  it('Escape cierra el drawer y deselecciona el viaje', async () => {
     const user = userEvent.setup()
     render(<Harness initial={{ selected: 'ord-1' }} />)
-    screen.getByRole('button', { name: /Cliente Uno/ }).focus()
+    screen.getByRole('dialog', { name: 'Detalle del viaje' }).focus()
     await user.keyboard('{Escape}')
-    expect(screen.getByText('Ningún viaje seleccionado')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Detalle del viaje' })).not.toBeInTheDocument()
   })
 
   it('ArrowDown en el buscador entra en la lista sin cambiar la selección', async () => {
@@ -123,7 +136,7 @@ describe('TripsPage - navegación por teclado', () => {
     screen.getByRole('textbox', { name: 'Buscar viajes' }).focus()
     await user.keyboard('{ArrowDown}')
     expect(screen.getByRole('button', { name: /Cliente Uno/ })).toHaveFocus()
-    expect(screen.getByText('Ningún viaje seleccionado')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Detalle del viaje' })).not.toBeInTheDocument()
   })
 
   it('abre los filtros desde el icono del buscador y aplica la procedencia', async () => {

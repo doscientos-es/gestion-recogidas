@@ -97,10 +97,9 @@ describe('inbound email webhook', () => {
     expect(verify).toHaveBeenCalledWith(
       expect.objectContaining({ payload, webhookSecret: 'test-webhook-secret' }),
     )
-    expect(upsert).toHaveBeenCalledWith(
-      expect.objectContaining({ resend_email_id: 'email-1' }),
-      { onConflict: 'resend_email_id' },
-    )
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({ resend_email_id: 'email-1' }), {
+      onConflict: 'resend_email_id',
+    })
     expect(result.status).toBe(200)
     expect(result.body).toBe('{"received":true}')
   })
