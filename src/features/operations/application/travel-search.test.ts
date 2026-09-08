@@ -13,6 +13,7 @@ describe('parseTravelSearch', () => {
         sort: 'amount_desc',
         page: '2',
         selected: ' ord-1 ',
+        compose: true,
       }),
     ).toEqual({
       q: 'Mataró',
@@ -22,6 +23,7 @@ describe('parseTravelSearch', () => {
       sort: 'amount_desc',
       page: 2,
       selected: 'ord-1',
+      compose: true,
     }))
   it('uses safe defaults', () =>
     expect(parseTravelSearch({ q: [], status: 'unknown' })).toEqual(defaultTravelSearch))
@@ -31,4 +33,6 @@ describe('parseTravelSearch', () => {
     expect(parseTravelSearch({ page: 0 }).page).toBe(1))
   it('ignores an invalid selected trip', () =>
     expect(parseTravelSearch({ selected: 42 }).selected).toBe(''))
+  it('defaults an invalid compose flag to closed', () =>
+    expect(parseTravelSearch({ compose: 'yes' }).compose).toBe(false))
 })

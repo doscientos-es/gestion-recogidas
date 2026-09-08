@@ -12,8 +12,16 @@ import {
 
 import { dataMode, loadOperations, saveOperations } from '../infrastructure/operations-repository'
 import { createSeedState } from '../infrastructure/seed-state'
-import type { OperationsState, PickupOrder } from './types'
-import { assignOrder, completeOrder, processInboundOrder, syncWithKabiku } from './workflow'
+import type { Driver, OperationsState, PickupOrder } from './types'
+import {
+  addDriver,
+  assignOrder,
+  completeOrder,
+  processInboundOrder,
+  removeDriver,
+  syncWithKabiku,
+  updateDriver,
+} from './workflow'
 
 interface OperationsContextValue {
   state: OperationsState
@@ -28,6 +36,9 @@ interface OperationsContextValue {
   invoice: (orderId: string) => void
   addManual: (order: PickupOrder) => void
   updateOrder: (orderId: string, patch: Partial<PickupOrder>) => void
+  addDriver: (driver: Driver) => void
+  updateDriver: (driverId: string, patch: Partial<Driver>) => void
+  deleteDriver: (driverId: string) => void
   reset: () => void
   refresh: () => Promise<void>
 }
@@ -104,6 +115,10 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
             order.id === orderId ? { ...order, ...patch } : order,
           ),
         })),
+      addDriver: (driver) => commit((current) => addDriver(current, driver)),
+      updateDriver: (driverId, patch) =>
+        commit((current) => updateDriver(current, driverId, patch)),
+      deleteDriver: (driverId) => commit((current) => removeDriver(current, driverId)),
       reset: () => commit(() => createSeedState()),
     }),
     [commit, error, query.isError, query.isPending, query.refetch, saving, state],

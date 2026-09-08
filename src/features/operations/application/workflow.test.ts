@@ -1,13 +1,17 @@
 import { describe, expect, it } from 'vitest'
 
 import { createSeedState } from '../infrastructure/seed-state'
+import type { Driver } from './types'
 import {
+  addDriver,
   assignOrder,
   buildCalendarContent,
   buildWhatsAppUrl,
   completeOrder,
   processInboundOrder,
+  removeDriver,
   syncWithKabiku,
+  updateDriver,
 } from './workflow'
 
 describe('pickup workflow', () => {
@@ -58,5 +62,59 @@ describe('pickup workflow', () => {
     expect(invitation).toContain('BEGIN:VCALENDAR')
     expect(invitation).toContain('DTSTART:20260910T073000Z')
     expect(invitation).toContain('Carrer de la Metal·lúrgia\\, 38')
+  })
+})
+
+describe('driver management', () => {
+  it('appends a new driver without touching the rest of the state', () => {
+    const state = createSeedState()
+    const newDriver: Driver = {
+      id: 'driver-nuevo',
+      name: 'Nuevo Conductor',
+      phone: '34600000000',
+      email: 'nuevo@example.test',
+      initials: 'NC',
+    }
+    const next = addDriver(state, newDriver)
+    expect(next.drivers).toHaveLength(state.drivers.length + 1)
+    expect(next.drivers.at(-1)).toEqual(newDriver)
+    expect(next.orders).toBe(state.orders)
+  })
+
+  it('patches only the matching driver', () => {
+    const state = createSeedState()
+    const next = updateDriver(state, 'driver-laura', { phone: '34600009999' })
+    expect(next.drivers.find((driver) => driver.id === 'driver-laura')?.phone).toBe('34600009999')
+    expect(next.drivers.find((driver) => driver.id === 'driver-marc')).toEqual(
+      state.drivers.find((driver) => driver.id === 'driver-marc'),
+    )
+  })
+
+  it('leaves the drivers unchanged when the id does not match', () => {
+    const state = createSeedState()
+    const next = updateDriver(state, 'driver-unknown', { name: 'Nadie' })
+    expect(next.drivers).toEqual(state.drivers)
+  })
+
+  it('removes the driver and unassigns their orders', () => {
+    const state = createSeedState()
+    const next = removeDriver(state, 'driver-laura')
+    expect(next.drivers.find((driver) => driver.id === 'driver-laura')).toBeUndefined()
+    const previouslyAssigned = state.orders.filter((order) => order.driverId === 'driver-laura')
+    expect(previouslyAssigned.length).toBeGreaterThan(0)
+    for (const order of previouslyAssigned) {
+      const updated = next.orders.find((item) => item.id === order.id)
+      expect(updated?.driverId).toBeUndefined()
+      expect(updated && 'driverId' in updated).toBe(false)
+    }
+  })
+
+  it('is a no-op on orders when the driver was never assigned', () => {
+    const state = createSeedState()
+    const next = removeDriver(state, 'driver-marc')
+    const untouched = state.orders.filter((order) => order.driverId !== 'driver-marc')
+    for (const order of untouched) {
+      expect(next.orders.find((item) => item.id === order.id)).toEqual(order)
+    }
   })
 })

@@ -6,8 +6,16 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@doscientos/ui'
-import { ChevronLeft, ChevronRight, Plus, RefreshCw, Search, X } from 'lucide-react'
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
+import { ChevronLeft, ChevronRight, Inbox, Search } from 'lucide-react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type KeyboardEvent,
+} from 'react'
 
 import { useOperations } from '../application/operations-context'
 import { defaultTravelSearch, type TravelSearch } from '../application/travel-search'
@@ -25,6 +33,31 @@ const statusTabs = [
   { value: 'completed', label: 'Completados' },
 ] as const satisfies readonly { value: TravelSearch['status']; label: string }[]
 
+function buttonsOf(container: HTMLElement | null): HTMLButtonElement[] {
+  return [...(container?.querySelectorAll<HTMLButtonElement>('button') ?? [])]
+}
+
+/**
+ * Grupos con tabindex móvil: el Tab entra y sale del grupo de una vez y las flechas
+ * (más Inicio y Fin) recorren sus botones. Devuelve el botón al que hay que ir.
+ */
+function nextButton(
+  container: HTMLElement | null,
+  key: string,
+  axis: 'vertical' | 'horizontal',
+): HTMLButtonElement | undefined {
+  const buttons = buttonsOf(container)
+  const current = buttons.indexOf(document.activeElement as HTMLButtonElement)
+  if (current < 0) return undefined
+  const back = axis === 'vertical' ? 'ArrowUp' : 'ArrowLeft'
+  const forward = axis === 'vertical' ? 'ArrowDown' : 'ArrowRight'
+  if (key === back) return buttons[Math.max(current - 1, 0)]
+  if (key === forward) return buttons[Math.min(current + 1, buttons.length - 1)]
+  if (key === 'Home') return buttons[0]
+  if (key === 'End') return buttons.at(-1)
+  return undefined
+}
+
 export function TripsPage({
   search,
   onSearchChange,
@@ -32,8 +65,7 @@ export function TripsPage({
   search: TravelSearch
   onSearchChange: (update: Partial<TravelSearch>) => void
 }) {
-  const { state, refresh, loading } = useOperations()
-  const [showForm, setShowForm] = useState(false)
+  const { state } = useOperations()
   // El texto escrito se mantiene en un estado local y viaja a la URL con retardo:
   // así no se dispara una consulta por pulsación de tecla.
   const [queryDraft, setQueryDraft] = useState(search.q)
@@ -58,26 +90,57 @@ export function TripsPage({
     [state.orders],
   )
   const orders = result.rows
-  const selected = orders.find((order) => order.id === search.selected) ?? orders[0]
+  const selected = search.selected
+    ? orders.find((order) => order.id === search.selected)
+    : undefined
+  const listRef = useRef<HTMLUListElement>(null)
+  const tabsRef = useRef<HTMLDivElement>(null)
+  // La fila enfocable con Tab es la seleccionada; si no hay ninguna, la primera de la página.
+  const focusableRowId = selected?.id ?? orders[0]?.id
+  // Al llegar una selección desde la URL (atrás/adelante) la fila puede quedar fuera de vista.
+  useEffect(() => {
+    if (!search.selected) return
+    listRef.current?.querySelector('[aria-current="true"]')?.scrollIntoView({ block: 'nearest' })
+  }, [search.selected])
+  function handleRowKeys(event: KeyboardEvent<HTMLButtonElement>) {
+    if (event.key === 'Escape') {
+      if (!search.selected) return
+      event.preventDefault()
+      onSearchChange({ selected: '' })
+      return
+    }
+    const target = nextButton(listRef.current, event.key, 'vertical')
+    if (!target) return
+    event.preventDefault()
+    target.focus()
+    target.click()
+  }
+  function handleTabKeys(event: KeyboardEvent<HTMLButtonElement>) {
+    const target = nextButton(tabsRef.current, event.key, 'horizontal')
+    if (!target) return
+    event.preventDefault()
+    target.focus()
+    target.click()
+  }
+  // Desde el buscador la flecha abajo entra en la lista sin cambiar todavía la selección.
+  function handleSearchKeys(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== 'ArrowDown') return
+    const rows = buttonsOf(listRef.current)
+    const target = rows.find((row) => row.tabIndex === 0) ?? rows[0]
+    if (!target) return
+    event.preventDefault()
+    target.focus()
+  }
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <Button variant="ghost" onPress={() => void refresh()} isDisabled={loading}>
-          <RefreshCw aria-hidden />
-          Actualizar
-        </Button>
-        <Button onPress={() => setShowForm((value) => !value)}>
-          {showForm ? <X aria-hidden /> : <Plus aria-hidden />}
-          {showForm ? 'Cerrar' : 'Nuevo viaje'}
-        </Button>
-      </div>
-      {showForm ? (
-        <ManualOrderForm
-          onCreated={(orderId) => {
-            onSearchChange({ ...defaultTravelSearch, selected: orderId })
-            setShowForm(false)
-          }}
-        />
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
+      {search.compose ? (
+        <div className="shrink-0">
+          <ManualOrderForm
+            onCreated={(orderId) =>
+              onSearchChange({ ...defaultTravelSearch, selected: orderId, compose: false })
+            }
+          />
+        </div>
       ) : null}
       <div className="inbox-grid">
         <section className="inbox-list" aria-label="Listado de viajes">
@@ -92,18 +155,21 @@ export function TripsPage({
                 onChange={(event: ChangeEvent<HTMLInputElement>) =>
                   setQueryDraft(event.target.value)
                 }
+                onKeyDown={handleSearchKeys}
                 placeholder="Buscar por referencia, cliente o ciudad"
               />
             </InputGroup>
-            <div className="inbox-tabs" role="tablist" aria-label="Estado del viaje">
+            <div ref={tabsRef} className="inbox-tabs" role="tablist" aria-label="Estado del viaje">
               {counts.map((tab) => (
                 <button
                   key={tab.value}
                   type="button"
                   role="tab"
+                  tabIndex={search.status === tab.value ? 0 : -1}
                   aria-selected={search.status === tab.value}
                   className={`inbox-tab ${search.status === tab.value ? 'inbox-tab-active' : ''}`}
                   onClick={() => onSearchChange({ status: tab.value, page: 1, selected: '' })}
+                  onKeyDown={handleTabKeys}
                 >
                   {tab.label}
                   <span className="inbox-tab-count">{tab.count}</span>
@@ -160,35 +226,38 @@ export function TripsPage({
               </select>
             </div>
           </div>
-          <ul className="inbox-rows">
-            {orders.map((order) => (
-              <li key={order.id}>
-                <button
-                  type="button"
-                  onClick={() => onSearchChange({ selected: order.id })}
-                  aria-current={selected?.id === order.id}
-                  className={`inbox-row ${selected?.id === order.id ? 'inbox-row-active' : ''}`}
-                >
-                  <span className="inbox-row-top">
-                    <strong>{order.customer}</strong>
-                    <small>{formatScheduledAt(order.scheduledAt)}</small>
-                  </span>
-                  <span className="inbox-row-route">
-                    {order.pickupCity} → {order.deliveryCity}
-                  </span>
-                  <span className="inbox-row-bottom">
-                    <small>{order.reference}</small>
-                    <StatusBadge status={order.status} />
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
           {result.total === 0 ? (
-            <p className="text-muted-foreground py-8 text-center text-sm">
+            <p className="text-muted-foreground flex-1 py-8 text-center text-sm">
               No hay viajes con estos filtros.
             </p>
-          ) : null}
+          ) : (
+            <ul ref={listRef} className="inbox-rows">
+              {orders.map((order) => (
+                <li key={order.id}>
+                  <button
+                    type="button"
+                    tabIndex={focusableRowId === order.id ? 0 : -1}
+                    onClick={() => onSearchChange({ selected: order.id })}
+                    onKeyDown={handleRowKeys}
+                    aria-current={selected?.id === order.id}
+                    className={`inbox-row ${selected?.id === order.id ? 'inbox-row-active' : ''}`}
+                  >
+                    <span className="inbox-row-top">
+                      <strong>{order.customer}</strong>
+                      <small>{formatScheduledAt(order.scheduledAt)}</small>
+                    </span>
+                    <span className="inbox-row-route">
+                      {order.pickupCity} → {order.deliveryCity}
+                    </span>
+                    <span className="inbox-row-bottom">
+                      <small>{order.reference}</small>
+                      <StatusBadge status={order.status} />
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
           <Pagination
             page={result.page}
             pageCount={result.pageCount}
@@ -200,9 +269,14 @@ export function TripsPage({
           {selected ? (
             <OrderDetailCard key={selected.id} order={selected} />
           ) : (
-            <Card>
-              <CardContent className="text-muted-foreground p-10 text-center text-sm">
-                Selecciona un viaje para ver su detalle.
+            <Card className="h-full">
+              <CardContent className="flex h-full flex-col items-center justify-center gap-2 p-10 text-center">
+                <Inbox aria-hidden className="text-muted-foreground size-8" />
+                <p className="font-semibold">Ningún viaje seleccionado</p>
+                <p className="text-muted-foreground text-sm">
+                  Elige un viaje de la lista para ver su detalle, editarlo y gestionar su
+                  asignación.
+                </p>
               </CardContent>
             </Card>
           )}

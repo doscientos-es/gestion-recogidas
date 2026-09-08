@@ -67,6 +67,35 @@ export function assignOrder(
   }
 }
 
+export function addDriver(state: OperationsState, driver: Driver): OperationsState {
+  return { ...state, drivers: [...state.drivers, driver] }
+}
+
+export function updateDriver(
+  state: OperationsState,
+  driverId: string,
+  patch: Partial<Driver>,
+): OperationsState {
+  return {
+    ...state,
+    drivers: state.drivers.map((driver) =>
+      driver.id === driverId ? { ...driver, ...patch } : driver,
+    ),
+  }
+}
+
+export function removeDriver(state: OperationsState, driverId: string): OperationsState {
+  return {
+    ...state,
+    drivers: state.drivers.filter((driver) => driver.id !== driverId),
+    orders: state.orders.map((order) => {
+      if (order.driverId !== driverId) return order
+      const { driverId: _removed, ...rest } = order
+      return rest
+    }),
+  }
+}
+
 export function markEmailSent(state: OperationsState, orderId: string): OperationsState {
   return {
     ...state,

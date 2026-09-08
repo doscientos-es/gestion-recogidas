@@ -27,14 +27,19 @@
   --color-info: var(--info);
 }
 
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   min-width: 320px;
-  min-height: 100vh;
   margin: 0;
 }
 
 #root {
-  min-height: 100vh;
+  height: 100%;
 }
 
 button,
@@ -169,7 +174,8 @@ select {
   align-items: start;
 }
 .inbox-list {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.75rem;
   min-width: 0;
   border: 1px solid var(--border);
@@ -179,6 +185,7 @@ select {
 }
 .inbox-toolbar {
   display: grid;
+  flex: none;
   gap: 0.6rem;
 }
 .inbox-tabs {
@@ -224,6 +231,7 @@ select {
 }
 .inbox-rows {
   display: grid;
+  align-content: start;
   gap: 0.3rem;
 }
 .inbox-row {
@@ -276,17 +284,33 @@ select {
 .inbox-detail {
   min-width: 0;
 }
+/* A partir de escritorio la pantalla no scrollea: cada columna gestiona el suyo. */
 @media (min-width: 1024px) {
   .inbox-grid {
-    grid-template-columns: minmax(20rem, 0.8fr) 1.4fr;
+    flex: 1;
+    min-height: 0;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .inbox-list {
+    min-height: 0;
+    overflow: hidden;
+  }
+  .inbox-rows {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 0.25rem;
   }
   .inbox-detail {
-    position: sticky;
-    top: 1rem;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 0.25rem;
   }
 }
 .pagination-bar {
   display: flex;
+  flex: none;
   flex-direction: column;
   align-items: center;
   gap: 0.65rem;
