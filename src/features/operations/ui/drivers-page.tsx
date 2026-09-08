@@ -14,11 +14,11 @@ import { Link } from '@tanstack/react-router'
 import { ArrowLeft, Pencil, Phone, Plus, Search, Trash2, X } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 
-import { useOperations } from '../application/operations-context'
 import { paginateDrivers, type DriverPage } from '../application/driver-queries'
-import { loadDriversPage } from '../infrastructure/operations-repository'
+import { useOperations } from '../application/operations-context'
 import { defaultTravelSearch } from '../application/travel-search'
 import type { Driver } from '../application/types'
+import { loadDriversPage } from '../infrastructure/operations-repository'
 
 function initialsFor(name: string): string {
   return (
@@ -62,7 +62,9 @@ export function DriversPage() {
       .catch((reason: unknown) => {
         if (active)
           setRemoteError(
-            reason instanceof Error ? reason.message : 'No se han podido recuperar los conductores.',
+            reason instanceof Error
+              ? reason.message
+              : 'No se han podido recuperar los conductores.',
           )
       })
     return () => {
@@ -199,7 +201,11 @@ export function DriversPage() {
           No hay conductores que coincidan con la búsqueda.
         </p>
       ) : (
-        <DriverPagination page={driversPage.page} pageCount={driversPage.pageCount} onChange={setPage} />
+        <DriverPagination
+          page={driversPage.page}
+          pageCount={driversPage.pageCount}
+          onChange={setPage}
+        />
       )}
     </div>
   )
@@ -217,7 +223,12 @@ function DriverPagination({
   if (pageCount <= 1) return null
   return (
     <nav aria-label="Paginación de conductores" className="flex items-center justify-center gap-3">
-      <Button type="button" variant="outline" onPress={() => onChange(page - 1)} isDisabled={page === 1}>
+      <Button
+        type="button"
+        variant="outline"
+        onPress={() => onChange(page - 1)}
+        isDisabled={page === 1}
+      >
         Anterior
       </Button>
       <span className="text-muted-foreground text-sm">

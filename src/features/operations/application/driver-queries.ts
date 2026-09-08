@@ -9,7 +9,11 @@ export interface DriverPage {
   total: number
 }
 
-export function paginateDrivers(drivers: Driver[], search: string, requestedPage: number): DriverPage {
+export function paginateDrivers(
+  drivers: Driver[],
+  search: string,
+  requestedPage: number,
+): DriverPage {
   const normalizedSearch = search.trim().toLocaleLowerCase('es-ES')
   const filtered = normalizedSearch
     ? drivers.filter((driver) =>
