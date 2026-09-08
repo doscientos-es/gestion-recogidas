@@ -34,7 +34,7 @@ function initialsFor(name: string): string {
 }
 
 export function DriversPage() {
-  const { state, mode, addDriver, updateDriver, deleteDriver } = useOperations()
+  const { state, mode, saving, addDriver, updateDriver, deleteDriver } = useOperations()
   const [creating, setCreating] = useState(false)
   const [editingId, setEditingId] = useState<string>()
   const [searchDraft, setSearchDraft] = useState('')
@@ -52,6 +52,7 @@ export function DriversPage() {
       setRemoteError(undefined)
       return
     }
+    if (saving) return
     let active = true
     setRemoteError(undefined)
     void loadDriversPage(search, page)
@@ -67,7 +68,7 @@ export function DriversPage() {
     return () => {
       active = false
     }
-  }, [mode, page, remoteKey, search])
+  }, [mode, page, remoteKey, saving, search])
 
   const driversPage =
     mode === 'supabase' && remotePage?.key === remoteKey ? remotePage.value : localPage
