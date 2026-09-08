@@ -13,7 +13,12 @@ import {
 
 describe('pickup workflow', () => {
   it('assigns a pickup to a driver', () => {
-    const state = assignOrder(createSeedState(), 'ord-260910-184', 'driver-david', 'vehicle-sprinter')
+    const state = assignOrder(
+      createSeedState(),
+      'ord-260910-184',
+      'driver-david',
+      'vehicle-sprinter',
+    )
     expect(state.orders[0]).toMatchObject({ status: 'assigned', emailState: 'prepared' })
     expect(state.vehicles.find((vehicle) => vehicle.id === 'vehicle-sprinter')?.status).toBe(
       'on_route',
@@ -62,6 +67,7 @@ describe('driver management', () => {
       phone: '34600000000',
       email: 'nuevo@example.test',
       initials: 'NC',
+      isExternal: true,
     }
     const next = addDriver(state, newDriver)
     expect(next.drivers).toHaveLength(state.drivers.length + 1)
@@ -71,8 +77,9 @@ describe('driver management', () => {
 
   it('patches only the matching driver', () => {
     const state = createSeedState()
-    const next = updateDriver(state, 'driver-laura', { phone: '34600009999' })
+    const next = updateDriver(state, 'driver-laura', { isExternal: false, phone: '34600009999' })
     expect(next.drivers.find((driver) => driver.id === 'driver-laura')?.phone).toBe('34600009999')
+    expect(next.drivers.find((driver) => driver.id === 'driver-laura')?.isExternal).toBe(false)
     expect(next.drivers.find((driver) => driver.id === 'driver-marc')).toEqual(
       state.drivers.find((driver) => driver.id === 'driver-marc'),
     )

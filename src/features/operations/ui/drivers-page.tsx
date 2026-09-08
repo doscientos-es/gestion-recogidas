@@ -1,4 +1,5 @@
 import {
+  Badge,
   Button,
   Card,
   CardContent,
@@ -84,7 +85,12 @@ export function DriversPage() {
             <Card key={driver.id}>
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle>{driver.name}</CardTitle>
+                  <div>
+                    <CardTitle>{driver.name}</CardTitle>
+                    <Badge className="mt-2" variant={driver.isExternal ? 'secondary' : 'success'}>
+                      {driver.isExternal ? 'Externo' : 'De la casa'}
+                    </Badge>
+                  </div>
                   <div className="flex items-center gap-1">
                     <Button
                       variant="ghost"
@@ -138,6 +144,7 @@ function DriverForm({
     name: driver?.name ?? '',
     phone: driver?.phone ?? '',
     email: driver?.email ?? '',
+    isExternal: driver?.isExternal ?? false,
   })
   function submit(event: FormEvent) {
     event.preventDefault()
@@ -148,6 +155,7 @@ function DriverForm({
       phone: values.phone.trim(),
       email: values.email.trim(),
       initials: initialsFor(name),
+      isExternal: values.isExternal,
     })
   }
   return (
@@ -188,6 +196,22 @@ function DriverForm({
           value={values.email}
           onChange={(event) => setValues({ ...values, email: event.target.value })}
         />
+      </div>
+      <div>
+        <label className="field-label" htmlFor="driver-type">
+          Tipo de conductor
+        </label>
+        <select
+          id="driver-type"
+          className="field-control w-full"
+          value={values.isExternal ? 'external' : 'internal'}
+          onChange={(event) =>
+            setValues({ ...values, isExternal: event.target.value === 'external' })
+          }
+        >
+          <option value="internal">De la casa</option>
+          <option value="external">Externo</option>
+        </select>
       </div>
       <div className="flex items-end gap-2 sm:col-span-3">
         <Button type="submit">{driver ? 'Guardar cambios' : 'Añadir conductor'}</Button>

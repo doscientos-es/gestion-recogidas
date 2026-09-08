@@ -92,6 +92,7 @@ const seedState: OperationsState = {
       phone: '34600000184',
       email: 'marc.soler@example.test',
       initials: 'MS',
+      isExternal: false,
     },
     {
       id: 'driver-laura',
@@ -99,6 +100,7 @@ const seedState: OperationsState = {
       phone: '34600000172',
       email: 'laura.vidal@example.test',
       initials: 'LV',
+      isExternal: true,
     },
     {
       id: 'driver-david',
@@ -106,6 +108,7 @@ const seedState: OperationsState = {
       phone: '34600000191',
       email: 'david.roca@example.test',
       initials: 'DR',
+      isExternal: false,
     },
   ],
   vehicles: [
@@ -167,9 +170,6 @@ export function createSeedState(): OperationsState {
 }
 
 function statusFor(index: number): PickupOrder['status'] {
-  const statuses = [
-    'pending_assignment',
-    'assigned',
-  ] as const
+  const statuses = ['pending_assignment', 'assigned'] as const
   return statuses[index % statuses.length] ?? 'pending_assignment'
 }

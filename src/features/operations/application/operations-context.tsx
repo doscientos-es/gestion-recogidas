@@ -13,12 +13,7 @@ import {
 import { dataMode, loadOperations, saveOperations } from '../infrastructure/operations-repository'
 import { createSeedState } from '../infrastructure/seed-state'
 import type { Driver, OperationsState, PickupOrder } from './types'
-import {
-  addDriver,
-  assignOrder,
-  removeDriver,
-  updateDriver,
-} from './workflow'
+import { addDriver, assignOrder, removeDriver, updateDriver } from './workflow'
 
 interface OperationsContextValue {
   state: OperationsState
@@ -89,7 +84,6 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
         await query.refetch()
       },
       assign: async (orderId, driverId, vehicleId) => {
-        const current = stateRef.current
         if (!commit((value) => assignOrder(value, orderId, driverId, vehicleId))) {
           setError('No se puede asignar: revisa que el viaje y el vehículo estén disponibles.')
           return

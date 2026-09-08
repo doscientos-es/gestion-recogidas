@@ -1,6 +1,4 @@
-export type OrderStatus =
-  | 'pending_assignment'
-  | 'assigned'
+export type OrderStatus = 'pending_assignment' | 'assigned'
 
 export type IntegrationState = 'pending' | 'prepared' | 'sent'
 
@@ -10,6 +8,7 @@ export interface Driver {
   phone: string
   email: string
   initials: string
+  isExternal: boolean
 }
 
 export interface Vehicle {

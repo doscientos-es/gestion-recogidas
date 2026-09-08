@@ -25,7 +25,11 @@ function normalizeOperationsState(state: OperationsState): OperationsState {
   return {
     ...state,
     orders: state.orders.map((item) => {
-      const { kabikuState: _legacyKabikuState, status, ...order } = item as PickupOrder & {
+      const {
+        kabikuState: _legacyKabikuState,
+        status,
+        ...order
+      } = item as Omit<PickupOrder, 'status'> & {
         kabikuState?: unknown
         status: string
       }

@@ -9,8 +9,7 @@ const labels: Record<OrderStatus, string> = {
 }
 
 export function StatusBadge({ status }: { status: OrderStatus }) {
-  const Icon =
-    status === 'pending_assignment' ? UserRoundPlus : CircleCheck
+  const Icon = status === 'pending_assignment' ? UserRoundPlus : CircleCheck
   const variant = status === 'pending_assignment' ? 'warning' : 'success'
   return (
     <Badge variant={variant}>
