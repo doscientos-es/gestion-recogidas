@@ -214,6 +214,12 @@ select {
   gap: 0.25rem;
   overflow-x: auto;
 }
+.inbox-filter-trigger {
+  color: var(--muted-foreground);
+}
+.inbox-filter-trigger:hover {
+  color: var(--primary);
+}
 .inbox-tab {
   display: inline-flex;
   align-items: center;
@@ -244,8 +250,9 @@ select {
 }
 .inbox-filters {
   display: grid;
-  gap: 0.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  width: min(18rem, calc(100vw - 2rem));
+  gap: 0.75rem;
+  padding: 0.65rem;
 }
 .inbox-filters .field-control {
   width: 100%;
@@ -277,7 +284,7 @@ select {
   background: color-mix(in srgb, var(--accent) 45%, var(--background));
 }
 .inbox-row-top,
-.inbox-row-bottom {
+.inbox-row-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -289,13 +296,13 @@ select {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.inbox-row-top small,
-.inbox-row-bottom small {
+.inbox-row-meta small {
   flex: none;
   color: var(--muted-foreground);
   font-size: 0.7rem;
 }
 .inbox-row-route {
+  min-width: 0;
   overflow: hidden;
   color: var(--muted-foreground);
   font-size: 0.78rem;
@@ -310,11 +317,16 @@ select {
   .inbox-grid {
     flex: 1;
     min-height: 0;
+    align-items: stretch;
     grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
     grid-template-rows: minmax(0, 1fr);
   }
-  .inbox-list {
+  .inbox-list,
+  .inbox-detail {
+    height: 100%;
     min-height: 0;
+  }
+  .inbox-list {
     overflow: hidden;
   }
   .inbox-rows {
@@ -327,6 +339,9 @@ select {
     min-height: 0;
     overflow-y: auto;
     padding-right: 0.25rem;
+  }
+  .inbox-detail > * {
+    min-height: 100%;
   }
 }
 .pagination-bar {
@@ -463,21 +478,6 @@ select {
 }
 .calendar-event {
   box-shadow: 0 4px 15px rgb(18 60 70 / 0.06);
-}
-.kabiku-banner {
-  border-color: color-mix(in srgb, var(--warning) 25%, var(--border));
-  background: color-mix(in srgb, var(--warning) 5%, var(--background));
-}
-.integration-logo {
-  display: grid;
-  width: 2.6rem;
-  height: 2.6rem;
-  place-items: center;
-  flex: none;
-  border-radius: 0.7rem;
-  background: #242424;
-  color: #fff;
-  font-weight: 800;
 }
 .plate {
   width: fit-content;

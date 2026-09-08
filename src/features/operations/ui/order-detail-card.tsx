@@ -9,7 +9,7 @@ import { RouteSummary } from './route-summary'
 import { StatusBadge } from './status-badge'
 
 export function OrderDetailCard({ order }: { order: PickupOrder }) {
-  const { state, processOrder, assign } = useOperations()
+  const { state, assign } = useOperations()
   const [driverId, setDriverId] = useState(order.driverId ?? state.drivers[0]?.id ?? '')
   const [assigning, setAssigning] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -50,17 +50,14 @@ export function OrderDetailCard({ order }: { order: PickupOrder }) {
             </div>
           </>
         )}
-        {order.status === 'received' ? (
-          <InboundAction order={order} onProcess={() => processOrder(order.id)} />
-        ) : null}
-        {order.status === 'pending_assignment' || order.status === 'scheduled' ? (
+        {order.status === 'pending_assignment' || order.status === 'assigned' ? (
           <div className="bg-primary/5 border-primary/15 space-y-4 rounded-xl border p-4">
             <div>
               <h3 className="font-semibold">
-                {order.status === 'scheduled' ? 'Cambiar conductor' : 'Asignar conductor'}
+                {order.status === 'assigned' ? 'Cambiar conductor' : 'Asignar conductor'}
               </h3>
               <p className="text-muted-foreground text-sm">
-                El viaje quedará confirmado al asignar un conductor.
+                El viaje quedará asignado al conductor seleccionado.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -81,9 +78,9 @@ export function OrderDetailCard({ order }: { order: PickupOrder }) {
             >
               {assigning
                 ? 'Guardando…'
-                : order.status === 'scheduled'
+                : order.status === 'assigned'
                   ? 'Guardar cambio'
-                  : 'Confirmar viaje'}
+                  : 'Asignar conductor'}
             </Button>
           </div>
         ) : null}
@@ -233,20 +230,6 @@ function EditField({
   )
 }
 
-function InboundAction({ order, onProcess }: { order: PickupOrder; onProcess: () => void }) {
-  return (
-    <div className="border-info/25 bg-info/5 flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <p className="font-semibold">Adjunto analizado correctamente</p>
-        <p className="text-muted-foreground text-sm">
-          {order.attachmentName} · 11 datos identificados con confianza alta
-        </p>
-      </div>
-      <Button onPress={onProcess}>Crear orden de recogida</Button>
-    </div>
-  )
-}
-
 function CommunicationActions({ order, driver }: { order: PickupOrder; driver: Driver }) {
   return (
     <div className="space-y-3">
@@ -265,9 +248,6 @@ function CommunicationActions({ order, driver }: { order: PickupOrder; driver: D
         >
           <MessageCircle aria-hidden />
           Abrir WhatsApp
-        </a>
-        <a className="action-link" href="#kabiku">
-          Ver en Kabiku
         </a>
       </div>
     </div>

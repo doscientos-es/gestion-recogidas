@@ -1,12 +1,8 @@
 export type OrderStatus =
-  | 'received'
   | 'pending_assignment'
-  | 'scheduled'
-  | 'in_progress'
-  | 'completed'
-  | 'invoiced'
+  | 'assigned'
 
-export type IntegrationState = 'pending' | 'prepared' | 'sent' | 'synced'
+export type IntegrationState = 'pending' | 'prepared' | 'sent'
 
 export interface Driver {
   id: string
@@ -45,7 +41,6 @@ export interface PickupOrder {
   vehicleId?: string
   calendarState: IntegrationState
   emailState: IntegrationState
-  kabikuState: IntegrationState
   receivedAt: string
 }
 

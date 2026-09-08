@@ -7,7 +7,7 @@ describe('parseTravelSearch', () => {
     expect(
       parseTravelSearch({
         q: '  Mataró ',
-        status: 'scheduled',
+        status: 'assigned',
         source: 'email',
         city: ' Mataró ',
         sort: 'amount_desc',
@@ -17,7 +17,7 @@ describe('parseTravelSearch', () => {
       }),
     ).toEqual({
       q: 'Mataró',
-      status: 'scheduled',
+      status: 'assigned',
       source: 'email',
       city: 'Mataró',
       sort: 'amount_desc',
@@ -27,8 +27,8 @@ describe('parseTravelSearch', () => {
     }))
   it('uses safe defaults', () =>
     expect(parseTravelSearch({ q: [], status: 'unknown' })).toEqual(defaultTravelSearch))
-  it('keeps the in-progress filter used by the trips page', () =>
-    expect(parseTravelSearch({ status: 'in_progress' }).status).toBe('in_progress'))
+  it('keeps the assigned filter used by the trips page', () =>
+    expect(parseTravelSearch({ status: 'assigned' }).status).toBe('assigned'))
   it('clamps invalid page values to the first page', () =>
     expect(parseTravelSearch({ page: 0 }).page).toBe(1))
   it('ignores an invalid selected trip', () =>

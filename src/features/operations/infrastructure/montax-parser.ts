@@ -43,7 +43,6 @@ export function parseMontaxEmail(input: {
     status: 'pending_assignment',
     calendarState: 'pending',
     emailState: 'pending',
-    kabikuState: 'pending',
     receivedAt: input.receivedAt ?? new Date().toISOString(),
   }
 }

@@ -34,7 +34,6 @@ const { orders } = vi.hoisted(() => {
       status: 'pending_assignment',
       calendarState: 'prepared',
       emailState: 'pending',
-      kabikuState: 'pending',
       receivedAt: '2026-09-01T09:00:00.000Z',
       ...overrides,
     }
@@ -61,7 +60,6 @@ const { orders } = vi.hoisted(() => {
 vi.mock('../application/operations-context', () => ({
   useOperations: () => ({
     state: { orders, drivers: [], vehicles: [], activity: [] },
-    processOrder: vi.fn(),
     assign: vi.fn(async () => {}),
     updateOrder: vi.fn(),
   }),
@@ -128,13 +126,25 @@ describe('TripsPage - navegación por teclado', () => {
     expect(screen.getByText('Ningún viaje seleccionado')).toBeInTheDocument()
   })
 
+  it('abre los filtros desde el icono del buscador y aplica la procedencia', async () => {
+    const user = userEvent.setup()
+    render(<Harness />)
+    expect(screen.queryByLabelText('Procedencia')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Mostrar filtros' }))
+    const source = screen.getByLabelText('Procedencia')
+    await user.selectOptions(source, 'manual')
+
+    expect(source).toHaveValue('manual')
+  })
+
   it('las flechas recorren los tabs de estado y activan la pestaña enfocada', async () => {
     const user = userEvent.setup()
     render(<Harness />)
     screen.getByRole('tab', { name: /Todos/ }).focus()
     await user.keyboard('{ArrowRight}')
-    const receivedTab = screen.getByRole('tab', { name: /Por procesar/ })
-    expect(receivedTab).toHaveFocus()
-    expect(receivedTab).toHaveAttribute('aria-selected', 'true')
+    const pendingAssignmentTab = screen.getByRole('tab', { name: /Por asignar/ })
+    expect(pendingAssignmentTab).toHaveFocus()
+    expect(pendingAssignmentTab).toHaveAttribute('aria-selected', 'true')
   })
 })

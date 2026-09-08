@@ -4,27 +4,6 @@ function activity(title: string, detail: string, tone: 'info' | 'success' | 'war
   return { id: crypto.randomUUID(), title, detail, at: 'Ahora', tone }
 }
 
-export function processInboundOrder(state: OperationsState, orderId: string): OperationsState {
-  const order = state.orders.find((item) => item.id === orderId)
-  if (!order || order.status !== 'received') return state
-  return {
-    ...state,
-    orders: state.orders.map((item) =>
-      item.id === orderId
-        ? { ...item, status: 'pending_assignment', calendarState: 'prepared' }
-        : item,
-    ),
-    activity: [
-      activity(
-        'Orden creada automáticamente',
-        `${order.reference} · añadida al calendario`,
-        'success',
-      ),
-      ...state.activity,
-    ],
-  }
-}
-
 export function assignOrder(
   state: OperationsState,
   orderId: string,
@@ -36,7 +15,7 @@ export function assignOrder(
   const vehicle = vehicleId ? state.vehicles.find((item) => item.id === vehicleId) : undefined
   if (
     !order ||
-    !['pending_assignment', 'scheduled'].includes(order.status) ||
+    !['pending_assignment', 'assigned'].includes(order.status) ||
     !driver ||
     (vehicleId && (!vehicle || vehicle.status !== 'available'))
   )
@@ -49,7 +28,7 @@ export function assignOrder(
             ...item,
             driverId,
             vehicleId,
-            status: 'scheduled',
+            status: 'assigned',
             calendarState: 'sent',
             emailState: 'prepared',
           }
@@ -102,43 +81,6 @@ export function markEmailSent(state: OperationsState, orderId: string): Operatio
     orders: state.orders.map((item) =>
       item.id === orderId ? { ...item, emailState: 'sent' } : item,
     ),
-  }
-}
-
-export function completeOrder(state: OperationsState, orderId: string): OperationsState {
-  const order = state.orders.find((item) => item.id === orderId)
-  if (!order || (order.status !== 'scheduled' && order.status !== 'in_progress')) return state
-  return {
-    ...state,
-    orders: state.orders.map((item) =>
-      item.id === orderId ? { ...item, status: 'completed', kabikuState: 'prepared' } : item,
-    ),
-    vehicles: state.vehicles.map((item) =>
-      item.id === order.vehicleId ? { ...item, status: 'available' } : item,
-    ),
-    activity: [
-      activity('Viaje completado', `${order.reference} · listo para facturar`, 'success'),
-      ...state.activity,
-    ],
-  }
-}
-
-export function syncWithKabiku(state: OperationsState, orderId: string): OperationsState {
-  const order = state.orders.find((item) => item.id === orderId)
-  if (!order || order.status !== 'completed') return state
-  return {
-    ...state,
-    orders: state.orders.map((item) =>
-      item.id === orderId ? { ...item, status: 'invoiced', kabikuState: 'synced' } : item,
-    ),
-    activity: [
-      activity(
-        'Factura preparada para Kabiku',
-        `${order.reference} · ${formatMoney(order.amountCents)}`,
-        'success',
-      ),
-      ...state.activity,
-    ],
   }
 }
 

@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CalendarioRouteImport } from './routes/calendario'
 import { Route as ConductoresRouteImport } from './routes/conductores'
-import { Route as FacturacionRouteImport } from './routes/facturacion'
 import { Route as VehiculosRouteImport } from './routes/vehiculos'
 import { Route as ViajesRouteImport } from './routes/viajes'
 
@@ -31,11 +30,6 @@ const ConductoresRoute = ConductoresRouteImport.update({
   path: '/conductores',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FacturacionRoute = FacturacionRouteImport.update({
-  id: '/facturacion',
-  path: '/facturacion',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const VehiculosRoute = VehiculosRouteImport.update({
   id: '/vehiculos',
   path: '/vehiculos',
@@ -51,7 +45,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/calendario': typeof CalendarioRoute
   '/conductores': typeof ConductoresRoute
-  '/facturacion': typeof FacturacionRoute
   '/vehiculos': typeof VehiculosRoute
   '/viajes': typeof ViajesRoute
 }
@@ -59,7 +52,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/calendario': typeof CalendarioRoute
   '/conductores': typeof ConductoresRoute
-  '/facturacion': typeof FacturacionRoute
   '/vehiculos': typeof VehiculosRoute
   '/viajes': typeof ViajesRoute
 }
@@ -68,42 +60,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/calendario': typeof CalendarioRoute
   '/conductores': typeof ConductoresRoute
-  '/facturacion': typeof FacturacionRoute
   '/vehiculos': typeof VehiculosRoute
   '/viajes': typeof ViajesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/calendario'
-    | '/conductores'
-    | '/facturacion'
-    | '/vehiculos'
-    | '/viajes'
+  fullPaths: '/' | '/calendario' | '/conductores' | '/vehiculos' | '/viajes'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/calendario'
-    | '/conductores'
-    | '/facturacion'
-    | '/vehiculos'
-    | '/viajes'
+  to: '/' | '/calendario' | '/conductores' | '/vehiculos' | '/viajes'
   id:
-    | '__root__'
-    | '/'
-    | '/calendario'
-    | '/conductores'
-    | '/facturacion'
-    | '/vehiculos'
-    | '/viajes'
+    '__root__' | '/' | '/calendario' | '/conductores' | '/vehiculos' | '/viajes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CalendarioRoute: typeof CalendarioRoute
   ConductoresRoute: typeof ConductoresRoute
-  FacturacionRoute: typeof FacturacionRoute
   VehiculosRoute: typeof VehiculosRoute
   ViajesRoute: typeof ViajesRoute
 }
@@ -131,13 +103,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConductoresRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/facturacion': {
-      id: '/facturacion'
-      path: '/facturacion'
-      fullPath: '/facturacion'
-      preLoaderRoute: typeof FacturacionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/vehiculos': {
       id: '/vehiculos'
       path: '/vehiculos'
@@ -159,7 +124,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CalendarioRoute: CalendarioRoute,
   ConductoresRoute: ConductoresRoute,
-  FacturacionRoute: FacturacionRoute,
   VehiculosRoute: VehiculosRoute,
   ViajesRoute: ViajesRoute,
 }

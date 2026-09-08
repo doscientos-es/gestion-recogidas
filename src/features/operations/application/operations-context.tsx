@@ -16,10 +16,7 @@ import type { Driver, OperationsState, PickupOrder } from './types'
 import {
   addDriver,
   assignOrder,
-  completeOrder,
-  processInboundOrder,
   removeDriver,
-  syncWithKabiku,
   updateDriver,
 } from './workflow'
 
@@ -30,10 +27,7 @@ interface OperationsContextValue {
   saving: boolean
   error: string | undefined
   clearError: () => void
-  processOrder: (orderId: string) => void
   assign: (orderId: string, driverId: string, vehicleId: string) => Promise<void>
-  complete: (orderId: string) => void
-  invoice: (orderId: string) => void
   addManual: (order: PickupOrder) => void
   updateOrder: (orderId: string, patch: Partial<PickupOrder>) => void
   addDriver: (driver: Driver) => void
@@ -94,9 +88,6 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
       refresh: async () => {
         await query.refetch()
       },
-      processOrder: (orderId) => {
-        commit((current) => processInboundOrder(current, orderId))
-      },
       assign: async (orderId, driverId, vehicleId) => {
         const current = stateRef.current
         if (!commit((value) => assignOrder(value, orderId, driverId, vehicleId))) {
@@ -104,8 +95,6 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
           return
         }
       },
-      complete: (orderId) => commit((current) => completeOrder(current, orderId)),
-      invoice: (orderId) => commit((current) => syncWithKabiku(current, orderId)),
       addManual: (order) =>
         commit((current) => ({ ...current, orders: [order, ...current.orders] })),
       updateOrder: (orderId, patch) =>

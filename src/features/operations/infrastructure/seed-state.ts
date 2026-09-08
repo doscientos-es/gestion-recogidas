@@ -15,11 +15,10 @@ const seedState: OperationsState = {
       weightKg: 860,
       amountCents: 28500,
       source: 'email',
-      status: 'received',
+      status: 'pending_assignment',
       attachmentName: 'orden-recogida-184.pdf',
       calendarState: 'pending',
       emailState: 'pending',
-      kabikuState: 'pending',
       receivedAt: '2026-09-08T09:12:00+02:00',
     },
     {
@@ -35,12 +34,11 @@ const seedState: OperationsState = {
       weightKg: 420,
       amountCents: 19800,
       source: 'email',
-      status: 'scheduled',
+      status: 'assigned',
       driverId: 'driver-marc',
       vehicleId: 'vehicle-ducato',
       calendarState: 'sent',
       emailState: 'sent',
-      kabikuState: 'pending',
       receivedAt: '2026-09-07T16:40:00+02:00',
     },
     {
@@ -56,12 +54,11 @@ const seedState: OperationsState = {
       weightKg: 310,
       amountCents: 16400,
       source: 'manual',
-      status: 'completed',
+      status: 'assigned',
       driverId: 'driver-laura',
       vehicleId: 'vehicle-sprinter',
       calendarState: 'sent',
       emailState: 'sent',
-      kabikuState: 'prepared',
       receivedAt: '2026-09-06T10:05:00+02:00',
     },
     ...Array.from({ length: 20 }, (_, index): PickupOrder => {
@@ -84,7 +81,6 @@ const seedState: OperationsState = {
         status: statusFor(index),
         calendarState: 'pending',
         emailState: 'pending',
-        kabikuState: 'pending',
         receivedAt: `2026-09-0${(index % 8) + 1}T08:00:00+02:00`,
       }
     }),
@@ -172,11 +168,8 @@ export function createSeedState(): OperationsState {
 
 function statusFor(index: number): PickupOrder['status'] {
   const statuses = [
-    'received',
     'pending_assignment',
-    'scheduled',
-    'in_progress',
-    'completed',
+    'assigned',
   ] as const
   return statuses[index % statuses.length] ?? 'pending_assignment'
 }

@@ -5,8 +5,9 @@ import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
+  Popover,
 } from '@doscientos/ui'
-import { ChevronLeft, ChevronRight, Inbox, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Inbox, Search, SlidersHorizontal } from 'lucide-react'
 import {
   useEffect,
   useMemo,
@@ -27,10 +28,8 @@ import { StatusBadge } from './status-badge'
 
 const statusTabs = [
   { value: 'all', label: 'Todos' },
-  { value: 'received', label: 'Por procesar' },
   { value: 'pending_assignment', label: 'Por asignar' },
-  { value: 'scheduled', label: 'Confirmados' },
-  { value: 'completed', label: 'Completados' },
+  { value: 'assigned', label: 'Asignados' },
 ] as const satisfies readonly { value: TravelSearch['status']; label: string }[]
 
 function buttonsOf(container: HTMLElement | null): HTMLButtonElement[] {
@@ -158,6 +157,87 @@ export function TripsPage({
                 onKeyDown={handleSearchKeys}
                 placeholder="Buscar por referencia, cliente o ciudad"
               />
+              <InputGroupAddon align="inline-end">
+                <Popover
+                  placement="bottom end"
+                  trigger={
+                    <Button
+                      aria-label="Mostrar filtros"
+                      className="inbox-filter-trigger"
+                      size="icon-sm"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <SlidersHorizontal aria-hidden />
+                    </Button>
+                  }
+                >
+                  <div className="inbox-filters" aria-label="Filtros avanzados">
+                    <div>
+                      <label className="field-label" htmlFor="trip-source">
+                        Procedencia
+                      </label>
+                      <select
+                        id="trip-source"
+                        className="field-control"
+                        value={search.source}
+                        onChange={(event) =>
+                          onSearchChange({
+                            source: event.target.value as TravelSearch['source'],
+                            page: 1,
+                            selected: '',
+                          })
+                        }
+                      >
+                        <option value="all">Toda procedencia</option>
+                        <option value="email">Importados por correo</option>
+                        <option value="manual">Alta manual</option>
+                      </select>
+                    </div>
+                    {cities.length > 1 ? (
+                      <div>
+                        <label className="field-label" htmlFor="trip-city">
+                          Recogida
+                        </label>
+                        <select
+                          id="trip-city"
+                          className="field-control"
+                          value={search.city}
+                          onChange={(event) =>
+                            onSearchChange({ city: event.target.value, page: 1, selected: '' })
+                          }
+                        >
+                          <option value="">Todas las recogidas</option>
+                          {cities.map((city) => (
+                            <option key={city} value={city}>
+                              Recogida en {city}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : null}
+                    <div>
+                      <label className="field-label" htmlFor="trip-sort">
+                        Ordenar por
+                      </label>
+                      <select
+                        id="trip-sort"
+                        className="field-control"
+                        value={search.sort}
+                        onChange={(event) =>
+                          onSearchChange({ sort: event.target.value as TravelSearch['sort'] })
+                        }
+                      >
+                        <option value="scheduled_asc">Recogida próxima</option>
+                        <option value="scheduled_desc">Recogida tardía</option>
+                        <option value="amount_desc">Importe mayor</option>
+                        <option value="amount_asc">Importe menor</option>
+                        <option value="reference_asc">Referencia</option>
+                      </select>
+                    </div>
+                  </div>
+                </Popover>
+              </InputGroupAddon>
             </InputGroup>
             <div ref={tabsRef} className="inbox-tabs" role="tablist" aria-label="Estado del viaje">
               {counts.map((tab) => (
@@ -175,55 +255,6 @@ export function TripsPage({
                   <span className="inbox-tab-count">{tab.count}</span>
                 </button>
               ))}
-            </div>
-            <div className="inbox-filters">
-              <select
-                aria-label="Procedencia"
-                className="field-control"
-                value={search.source}
-                onChange={(event) =>
-                  onSearchChange({
-                    source: event.target.value as TravelSearch['source'],
-                    page: 1,
-                    selected: '',
-                  })
-                }
-              >
-                <option value="all">Toda procedencia</option>
-                <option value="email">Importados por correo</option>
-                <option value="manual">Alta manual</option>
-              </select>
-              {cities.length > 1 ? (
-                <select
-                  aria-label="Ciudad de recogida"
-                  className="field-control"
-                  value={search.city}
-                  onChange={(event) =>
-                    onSearchChange({ city: event.target.value, page: 1, selected: '' })
-                  }
-                >
-                  <option value="">Todas las recogidas</option>
-                  {cities.map((city) => (
-                    <option key={city} value={city}>
-                      Recogida en {city}
-                    </option>
-                  ))}
-                </select>
-              ) : null}
-              <select
-                aria-label="Orden"
-                className="field-control"
-                value={search.sort}
-                onChange={(event) =>
-                  onSearchChange({ sort: event.target.value as TravelSearch['sort'] })
-                }
-              >
-                <option value="scheduled_asc">Recogida próxima</option>
-                <option value="scheduled_desc">Recogida tardía</option>
-                <option value="amount_desc">Importe mayor</option>
-                <option value="amount_asc">Importe menor</option>
-                <option value="reference_asc">Referencia</option>
-              </select>
             </div>
           </div>
           {result.total === 0 ? (
@@ -244,14 +275,13 @@ export function TripsPage({
                   >
                     <span className="inbox-row-top">
                       <strong>{order.customer}</strong>
-                      <small>{formatScheduledAt(order.scheduledAt)}</small>
-                    </span>
-                    <span className="inbox-row-route">
-                      {order.pickupCity} → {order.deliveryCity}
-                    </span>
-                    <span className="inbox-row-bottom">
-                      <small>{order.reference}</small>
                       <StatusBadge status={order.status} />
+                    </span>
+                    <span className="inbox-row-meta">
+                      <span className="inbox-row-route">
+                        {order.pickupCity} → {order.deliveryCity}
+                      </span>
+                      <small>{formatScheduledAt(order.scheduledAt)}</small>
                     </span>
                   </button>
                 </li>
@@ -393,7 +423,6 @@ function ManualOrderForm({ onCreated }: { onCreated: (orderId: string) => void }
       status: 'pending_assignment',
       calendarState: 'prepared',
       emailState: 'pending',
-      kabikuState: 'pending',
       receivedAt: new Date().toISOString(),
     }
     addManual(order)

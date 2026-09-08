@@ -7,37 +7,25 @@ import {
   assignOrder,
   buildCalendarContent,
   buildWhatsAppUrl,
-  completeOrder,
-  processInboundOrder,
   removeDriver,
-  syncWithKabiku,
   updateDriver,
 } from './workflow'
 
 describe('pickup workflow', () => {
-  it('moves an inbound email through assignment, completion and invoicing', () => {
-    let state = processInboundOrder(createSeedState(), 'ord-260910-184')
-    expect(state.orders[0]?.status).toBe('pending_assignment')
-    state = assignOrder(state, 'ord-260910-184', 'driver-david', 'vehicle-sprinter')
-    expect(state.orders[0]).toMatchObject({ status: 'scheduled', emailState: 'prepared' })
+  it('assigns a pickup to a driver', () => {
+    const state = assignOrder(createSeedState(), 'ord-260910-184', 'driver-david', 'vehicle-sprinter')
+    expect(state.orders[0]).toMatchObject({ status: 'assigned', emailState: 'prepared' })
     expect(state.vehicles.find((vehicle) => vehicle.id === 'vehicle-sprinter')?.status).toBe(
       'on_route',
     )
-    state = completeOrder(state, 'ord-260910-184')
-    expect(state.vehicles.find((vehicle) => vehicle.id === 'vehicle-sprinter')?.status).toBe(
-      'available',
-    )
-    state = syncWithKabiku(state, 'ord-260910-184')
-    expect(state.orders[0]).toMatchObject({ status: 'invoiced', kabikuState: 'synced' })
   })
 
   it('rejects assignment with a busy vehicle or from an invalid status', () => {
-    const received = createSeedState()
-    const pending = processInboundOrder(received, 'ord-260910-184')
+    const pending = createSeedState()
     expect(assignOrder(pending, 'ord-260910-184', 'driver-david', 'vehicle-ducato')).toBe(pending)
-    const scheduled = assignOrder(pending, 'ord-260910-184', 'driver-david', 'vehicle-sprinter')
-    expect(assignOrder(scheduled, 'ord-260910-184', 'driver-laura', 'vehicle-sprinter')).toBe(
-      scheduled,
+    const assigned = assignOrder(pending, 'ord-260910-184', 'driver-david', 'vehicle-sprinter')
+    expect(assignOrder(assigned, 'ord-260910-184', 'driver-laura', 'vehicle-sprinter')).toBe(
+      assigned,
     )
   })
 

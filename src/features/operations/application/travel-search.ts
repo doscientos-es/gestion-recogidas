@@ -2,12 +2,8 @@ import { z } from 'zod'
 
 const status = z.enum([
   'all',
-  'received',
   'pending_assignment',
-  'scheduled',
-  'in_progress',
-  'completed',
-  'invoiced',
+  'assigned',
 ])
 const source = z.enum(['all', 'email', 'manual'])
 const sort = z.enum([

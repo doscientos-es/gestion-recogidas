@@ -38,9 +38,7 @@ export function CalendarPage() {
       </PageHeader>
       <div className="calendar-grid">
         {days.map((day) => {
-          const orders = state.orders.filter(
-            (order) => order.scheduledAt.startsWith(day.key) && order.status !== 'received',
-          )
+          const orders = state.orders.filter((order) => order.scheduledAt.startsWith(day.key))
           return (
             <section
               key={day.key}

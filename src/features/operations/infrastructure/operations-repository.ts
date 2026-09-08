@@ -1,6 +1,6 @@
 import { createBrowserSupabaseClient } from '@/shared/lib/supabase/client'
 
-import type { OperationsState } from '../application/types'
+import type { OperationsState, PickupOrder } from '../application/types'
 import { createSeedState } from './seed-state'
 
 const storageKey = 'gestion-recogidas-demo-v1'
@@ -20,6 +20,26 @@ function isOperationsState(value: unknown): value is OperationsState {
   )
 }
 
+/** Adapta los datos guardados antes de simplificar el flujo de recogidas. */
+function normalizeOperationsState(state: OperationsState): OperationsState {
+  return {
+    ...state,
+    orders: state.orders.map((item) => {
+      const { kabikuState: _legacyKabikuState, status, ...order } = item as PickupOrder & {
+        kabikuState?: unknown
+        status: string
+      }
+      return {
+        ...order,
+        status:
+          status === 'received' || status === 'pending_assignment'
+            ? 'pending_assignment'
+            : 'assigned',
+      }
+    }),
+  }
+}
+
 async function currentUserId(): Promise<string> {
   const client = createBrowserSupabaseClient()
   const current = await client.auth.getUser()
@@ -36,7 +56,7 @@ export async function loadOperations(): Promise<OperationsState> {
     if (!stored) return createSeedState()
     try {
       const parsed: unknown = JSON.parse(stored)
-      return isOperationsState(parsed) ? parsed : createSeedState()
+      return isOperationsState(parsed) ? normalizeOperationsState(parsed) : createSeedState()
     } catch {
       return createSeedState()
     }
@@ -49,7 +69,7 @@ export async function loadOperations(): Promise<OperationsState> {
     .eq('owner_id', ownerId)
     .maybeSingle()
   if (result.error) throw new Error('No se han podido recuperar las operaciones de Supabase.')
-  if (isOperationsState(result.data?.state)) return result.data.state
+  if (isOperationsState(result.data?.state)) return normalizeOperationsState(result.data.state)
   const state = createSeedState()
   await saveOperations(state)
   return state

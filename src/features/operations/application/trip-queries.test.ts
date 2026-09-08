@@ -20,7 +20,6 @@ function build(
     status: 'pending_assignment',
     calendarState: 'pending',
     emailState: 'pending',
-    kabikuState: 'pending',
     receivedAt: '2026-09-01T08:00:00+02:00',
     ...overrides,
   }
@@ -33,7 +32,7 @@ describe('trip queries', () => {
       reference: 'REC-2026-0003',
       scheduledAt: '2026-09-10T09:00:00+02:00',
       amountCents: 3000,
-      status: 'scheduled',
+      status: 'assigned',
       source: 'manual',
       pickupCity: 'Mataró',
     }),
@@ -48,7 +47,7 @@ describe('trip queries', () => {
       reference: 'REC-2026-0002',
       scheduledAt: '2026-09-09T09:00:00+02:00',
       amountCents: 2000,
-      status: 'completed',
+      status: 'assigned',
       pickupCity: 'Sabadell',
       customer: 'Mareas',
     }),
@@ -57,7 +56,7 @@ describe('trip queries', () => {
   it('combines status, origin, city and text filters', () => {
     const search: TravelSearch = {
       ...defaultTravelSearch,
-      status: 'completed',
+      status: 'assigned',
       source: 'email',
       city: 'Sabadell',
       q: 'mareas',
