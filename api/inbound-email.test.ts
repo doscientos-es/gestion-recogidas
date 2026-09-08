@@ -10,10 +10,12 @@ const { getEmail, upsert, verify } = vi.hoisted(() => ({
 }))
 
 vi.mock('resend', () => ({
-  Resend: vi.fn(() => ({
-    emails: { receiving: { get: getEmail } },
-    webhooks: { verify },
-  })),
+  Resend: vi.fn(function ResendMock() {
+    return {
+      emails: { receiving: { get: getEmail } },
+      webhooks: { verify },
+    }
+  }),
 }))
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({ from: vi.fn(() => ({ upsert })) })),

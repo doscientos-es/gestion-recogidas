@@ -24,7 +24,7 @@ export function parseMontaxEmail(input: {
   const time = value(raw, 'HORA DEL SERVICIO')
   const origin = value(raw, 'ORIGEN')
   const destination = value(raw, 'DESTINO')
-  const scheduledAt = new Date(`${date} ${time}`).toISOString()
+  const scheduledDate = new Date(`${date} ${time}`)
   return {
     id: `montax-${input.emailId}`,
     reference: `MONTAX-${id}`,
@@ -33,9 +33,9 @@ export function parseMontaxEmail(input: {
     pickupCity: '',
     deliveryAddress: destination || 'Destino pendiente',
     deliveryCity: '',
-    scheduledAt: Number.isNaN(new Date(`${date} ${time}`).getTime())
+    scheduledAt: Number.isNaN(scheduledDate.getTime())
       ? new Date().toISOString()
-      : scheduledAt,
+      : scheduledDate.toISOString(),
     cargo: `${value(raw, 'TIPO SERVICIO') || 'Servicio'} · ${value(raw, 'Nº PAX')} pasajeros`,
     weightKg: 0,
     amountCents: 0,

@@ -4,7 +4,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import { queryClient, router } from '@/app/router'
-import { OperationsProvider } from '@/features/operations'
+import { OperationsProvider } from '@/features/operations/application/operations-context'
 
 import './styles.css'
 

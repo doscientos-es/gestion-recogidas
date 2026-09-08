@@ -3,7 +3,8 @@ import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { Plus, RefreshCw, Users, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-import { defaultTravelSearch, useOperations } from '@/features/operations'
+import { useOperations } from '@/features/operations/application/operations-context'
+import { defaultTravelSearch } from '@/features/operations/application/travel-search'
 
 export function AppFrame({ children }: { children: ReactNode }) {
   const { clearError, error, loading, saving, refresh } = useOperations()
