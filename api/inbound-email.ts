@@ -5,32 +5,76 @@ import { Resend } from 'resend'
 
 import { parseMontaxEmail } from '../src/features/operations/infrastructure/montax-parser'
 
-function requireServerEnvironment(name: 'SUPABASE_URL' | 'SUPABASE_SECRET_KEY'): string {
+const MAX_BODY_BYTES = 1_000_000
+
+export const config = { api: { bodyParser: false } }
+
+class PayloadTooLargeError extends Error {}
+
+function requireServerEnvironment(
+  name: 'INBOUND_WEBHOOK_SECRET' | 'RESEND_API_KEY' | 'SUPABASE_URL' | 'SUPABASE_SECRET_KEY',
+): string {
   const value = process.env[name]?.trim()
   if (!value) throw new Error(`Falta la variable de servidor ${name}.`)
   return value
 }
 
+function header(request: IncomingMessage, name: string): string | undefined {
+  const value = request.headers[name]
+  return typeof value === 'string' ? value : undefined
+}
+
+async function readRawBody(request: IncomingMessage): Promise<string> {
+  const chunks: Buffer[] = []
+  let length = 0
+  for await (const chunk of request) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
+    length += buffer.length
+    if (length > MAX_BODY_BYTES) throw new PayloadTooLargeError()
+    chunks.push(buffer)
+  }
+  return Buffer.concat(chunks).toString('utf8')
+}
+
+function sendJson(response: ServerResponse, status: number, body: object) {
+  response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' })
+  response.end(JSON.stringify(body))
+}
+
 export default async function handler(
-  request: IncomingMessage & { body?: unknown },
+  request: IncomingMessage,
   response: ServerResponse,
 ) {
   if (request.method !== 'POST') {
-    response.writeHead(405)
-    response.end()
+    response.setHeader('Allow', 'POST')
+    sendJson(response, 405, { error: 'Método no permitido' })
     return
   }
   try {
-    const event = request.body as {
-      type?: string
-      data?: { email_id?: string; created_at?: string }
-    }
-    if (event.type !== 'email.received' || !event.data?.email_id) {
-      response.writeHead(200)
-      response.end(JSON.stringify({ ignored: true }))
+    const payload = await readRawBody(request)
+    const id = header(request, 'svix-id')
+    const timestamp = header(request, 'svix-timestamp')
+    const signature = header(request, 'svix-signature')
+    if (!id || !timestamp || !signature) {
+      sendJson(response, 400, { error: 'Cabeceras de firma incompletas' })
       return
     }
-    const resend = new Resend(process.env.RESEND_API_KEY)
+    const resend = new Resend(requireServerEnvironment('RESEND_API_KEY'))
+    let event
+    try {
+      event = resend.webhooks.verify({
+        payload,
+        headers: { id, timestamp, signature },
+        webhookSecret: requireServerEnvironment('INBOUND_WEBHOOK_SECRET'),
+      })
+    } catch {
+      sendJson(response, 401, { error: 'Firma de webhook no válida' })
+      return
+    }
+    if (event.type !== 'email.received' || !event.data?.email_id) {
+      sendJson(response, 200, { ignored: true })
+      return
+    }
     const result = await resend.emails.receiving.get(event.data.email_id)
     if (result.error || !result.data)
       throw new Error(result.error?.message ?? 'No se pudo recuperar el email')
@@ -54,12 +98,12 @@ export default async function handler(
       { onConflict: 'resend_email_id' },
     )
     if (saved.error) throw saved.error
-    response.writeHead(200, { 'Content-Type': 'application/json' })
-    response.end(JSON.stringify({ received: true, order }))
+    sendJson(response, 200, { received: true })
   } catch (error) {
-    response.writeHead(500, { 'Content-Type': 'application/json' })
-    response.end(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Webhook error' }),
-    )
+    if (error instanceof PayloadTooLargeError) {
+      sendJson(response, 413, { error: 'Carga demasiado grande' })
+      return
+    }
+    sendJson(response, 500, { error: 'No se ha podido procesar el webhook' })
   }
 }

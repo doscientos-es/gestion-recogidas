@@ -15,10 +15,9 @@ export function AppFrame({ children }: { children: ReactNode }) {
       <AppShellMain className="flex min-h-0 min-w-0 flex-1 flex-col">
         <AppShellHeader className="mx-auto flex h-14 w-full max-w-[100rem] shrink-0 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link to="/viajes" search={{ ...defaultTravelSearch }} className="brand-mark">
-            <span>GR</span>
-            <span>
+            <span className="flex flex-col gap-0.5">
               <strong>Gestión</strong>
-              <small>de recogidas</small>
+              <small>Automática</small>
             </span>
           </Link>
           <div className="flex items-center gap-3">

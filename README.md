@@ -23,7 +23,7 @@ Los datos son sintéticos pero concretos. El modo inicial persiste interacciones
 | `src/features/operations/application`    | Tipos, estado y reglas del workflow.                              |
 | `src/features/operations/infrastructure` | Persistencia local/Supabase y notificaciones.                     |
 | `src/features/operations/ui`             | Dashboard, viajes, calendario, facturación y flota.               |
-| `api/driver-notification.ts`             | Función Vercel que valida y envía email con Resend y adjunto ICS. |
+| `api/inbound-email.ts`                   | Función Vercel que verifica webhooks de Resend y persiste emails. |
 | `src/routes`                             | Rutas tipadas de TanStack Router.                                 |
 
 La URL pertenece a TanStack Router, la caché remota a TanStack Query y las primitivas
@@ -39,6 +39,9 @@ Copiar `.env.example` a `.env.local`. Para la presentación no hace falta modifi
   verificado en Resend y las variables públicas requieren un nuevo build.
 - `DEMO_NOTIFICATION_RECIPIENT` fija el único buzón receptor y evita que el endpoint
   público pueda utilizarse para enviar a direcciones arbitrarias.
+- Para correo entrante: configurar `RESEND_API_KEY`, `INBOUND_WEBHOOK_SECRET`,
+  `SUPABASE_URL` y `SUPABASE_SECRET_KEY` sólo en Vercel. El endpoint
+  `/api/inbound-email` valida la firma de Resend antes de leer o persistir el correo.
 - Para persistencia remota: aplicar la migración incluida, habilitar los inicios de
   sesión anónimos y usar `VITE_DATA_MODE=supabase`, URL y publishable key. Nunca
   exponer una service role.
@@ -49,7 +52,7 @@ Copiar `.env.example` a `.env.local`. Para la presentación no hace falta modifi
 - `pnpm quality`: formato, lint, arquitectura, TypeScript y tests.
 - `pnpm build`: bundle de producción.
 - En Vercel, seleccionar este directorio como root; el framework se detecta como Vite.
-- `vercel.json` conserva las rutas de la SPA y deja `/api/driver-notification` como función.
+- `vercel.json` conserva las rutas de la SPA y deja `/api/inbound-email` como función.
 
 Kabiku y Movildata se abren como integraciones externas. Sus escrituras permanecen en
 modo demostración hasta disponer de documentación y credenciales API aprobadas.

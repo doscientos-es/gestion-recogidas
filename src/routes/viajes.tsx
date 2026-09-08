@@ -1,20 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, lazyRouteComponent } from '@tanstack/react-router'
 
-import { parseTravelSearch, TripsPage, type TravelSearch } from '@/features/operations'
+import { parseTravelSearch } from '@/features/operations/application/travel-search'
 
 export const Route = createFileRoute('/viajes')({
   validateSearch: parseTravelSearch,
-  component: TripsRoute,
+  component: lazyRouteComponent(() => import('@/features/operations/ui/trips-page'), 'TripsRoute'),
 })
-function TripsRoute() {
-  const search = Route.useSearch()
-  const navigate = Route.useNavigate()
-  return (
-    <TripsPage
-      search={search}
-      onSearchChange={(update: Partial<TravelSearch>) =>
-        void navigate({ search: (previous) => ({ ...previous, ...update }) })
-      }
-    />
-  )
-}

@@ -8,6 +8,7 @@ import {
   Popover,
 } from '@doscientos/ui'
 import { ChevronLeft, ChevronRight, Inbox, Search, SlidersHorizontal } from 'lucide-react'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import {
   useEffect,
   useMemo,
@@ -31,6 +32,19 @@ const statusTabs = [
   { value: 'pending_assignment', label: 'Por asignar' },
   { value: 'assigned', label: 'Asignados' },
 ] as const satisfies readonly { value: TravelSearch['status']; label: string }[]
+
+export function TripsRoute() {
+  const search = useSearch({ from: '/viajes' })
+  const navigate = useNavigate()
+  return (
+    <TripsPage
+      search={search}
+      onSearchChange={(update: Partial<TravelSearch>) =>
+        void navigate({ to: '/viajes', search: (previous) => ({ ...previous, ...update }) })
+      }
+    />
+  )
+}
 
 function buttonsOf(container: HTMLElement | null): HTMLButtonElement[] {
   return [...(container?.querySelectorAll<HTMLButtonElement>('button') ?? [])]

@@ -1,8 +1,8 @@
 {
   "rewrites": [
-    { "source": "/viajes", "destination": "/index.html" },
-    { "source": "/calendario", "destination": "/index.html" },
-    { "source": "/facturacion", "destination": "/index.html" },
-    { "source": "/vehiculos", "destination": "/index.html" }
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }

@@ -65,27 +65,10 @@ select {
   outline-offset: 3px;
 }
 .brand-mark {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  color: var(--foreground);
-  text-decoration: none;
-}
-.brand-mark > span:first-child {
-  display: grid;
-  width: 2.25rem;
-  height: 2.25rem;
-  place-items: center;
-  border-radius: 0.7rem;
-  background: var(--primary);
-  color: white;
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-}
-.brand-mark > span:last-child {
   display: grid;
   line-height: 1.05;
+  color: var(--foreground);
+  text-decoration: none;
 }
 .brand-mark strong {
   font-size: 0.9rem;
