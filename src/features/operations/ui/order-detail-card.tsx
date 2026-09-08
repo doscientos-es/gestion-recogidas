@@ -1,4 +1,4 @@
-import { Button, Card, CardContent, CardHeader, CardTitle, Label } from '@doscientos/ui'
+import { Button, Label } from '@doscientos/ui'
 import { CalendarClock, MailCheck, MessageCircle, Package, Pencil, WalletCards } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
 
@@ -16,12 +16,12 @@ export function OrderDetailCard({ order }: { order: PickupOrder }) {
   const driver = state.drivers.find((item) => item.id === order.driverId)
 
   return (
-    <Card className="border-primary/15 overflow-hidden">
-      <CardHeader className="bg-muted/40 border-b">
+    <div className="space-y-5">
+      <header className="border-b pr-10 pb-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-muted-foreground text-xs">{order.reference}</p>
-            <CardTitle className="mt-1">{order.customer}</CardTitle>
+            <h2 className="mt-1 text-lg font-semibold tracking-tight">{order.customer}</h2>
           </div>
           <div className="flex items-center gap-2">
             <StatusBadge status={order.status} />
@@ -36,66 +36,64 @@ export function OrderDetailCard({ order }: { order: PickupOrder }) {
             </Button>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-5 pt-5">
-        {editing ? (
-          <OrderEditForm order={order} onDone={() => setEditing(false)} />
-        ) : (
-          <>
-            <RouteSummary order={order} />
-            <div className="detail-summary">
-              <Info
-                icon={<CalendarClock aria-hidden />}
-                label="Fecha y hora"
-                value={formatScheduledAt(order.scheduledAt)}
-              />
-              <Info
-                icon={<Package aria-hidden />}
-                label="Carga"
-                value={`${order.cargo} · ${order.weightKg} kg`}
-              />
-              <Info
-                icon={<WalletCards aria-hidden />}
-                label="Importe"
-                value={formatMoney(order.amountCents)}
-              />
-            </div>
-          </>
-        )}
-        {order.status === 'pending_assignment' || order.status === 'assigned' ? (
-          <div className="driver-assignment">
-            <div className="driver-assignment-actions">
-              <SelectField
-                id="order-driver"
-                label={order.status === 'assigned' ? 'Cambiar conductor' : 'Asignar conductor'}
-                value={driverId}
-                onChange={setDriverId}
-                options={state.drivers.map((item) => [item.id, item.name])}
-              />
-              <Button
-                isDisabled={
-                  !driverId ||
-                  assigning ||
-                  (order.status === 'assigned' && driverId === order.driverId)
-                }
-                size="sm"
-                onPress={() => {
-                  setAssigning(true)
-                  void assign(order.id, driverId, '').finally(() => setAssigning(false))
-                }}
-              >
-                {assigning
-                  ? 'Guardando…'
-                  : order.status === 'assigned'
-                    ? 'Guardar cambio'
-                    : 'Asignar conductor'}
-              </Button>
-            </div>
+      </header>
+      {editing ? (
+        <OrderEditForm order={order} onDone={() => setEditing(false)} />
+      ) : (
+        <>
+          <RouteSummary order={order} />
+          <div className="detail-summary">
+            <Info
+              icon={<CalendarClock aria-hidden />}
+              label="Fecha y hora"
+              value={formatScheduledAt(order.scheduledAt)}
+            />
+            <Info
+              icon={<Package aria-hidden />}
+              label="Carga"
+              value={`${order.cargo} · ${order.weightKg} kg`}
+            />
+            <Info
+              icon={<WalletCards aria-hidden />}
+              label="Importe"
+              value={formatMoney(order.amountCents)}
+            />
           </div>
-        ) : null}
-        {driver ? <CommunicationActions order={order} driver={driver} /> : null}
-      </CardContent>
-    </Card>
+        </>
+      )}
+      {order.status === 'pending_assignment' || order.status === 'assigned' ? (
+        <div className="driver-assignment">
+          <div className="driver-assignment-actions">
+            <SelectField
+              id="order-driver"
+              label={order.status === 'assigned' ? 'Cambiar conductor' : 'Asignar conductor'}
+              value={driverId}
+              onChange={setDriverId}
+              options={state.drivers.map((item) => [item.id, item.name])}
+            />
+            <Button
+              isDisabled={
+                !driverId ||
+                assigning ||
+                (order.status === 'assigned' && driverId === order.driverId)
+              }
+              size="sm"
+              onPress={() => {
+                setAssigning(true)
+                void assign(order.id, driverId).finally(() => setAssigning(false))
+              }}
+            >
+              {assigning
+                ? 'Guardando…'
+                : order.status === 'assigned'
+                  ? 'Guardar cambio'
+                  : 'Asignar conductor'}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+      {driver ? <CommunicationActions order={order} driver={driver} /> : null}
+    </div>
   )
 }
 

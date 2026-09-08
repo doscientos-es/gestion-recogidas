@@ -21,7 +21,6 @@ vi.mock('../application/operations-context', () => ({
     deleteDriver: vi.fn(),
     state: {
       orders: [],
-      vehicles: [],
       activity: [],
       drivers: [
         {

@@ -33,7 +33,6 @@ vi.mock('../application/operations-context', () => ({
           isExternal: false,
         },
       ],
-      vehicles: [],
       activity: [],
     },
     assign,
@@ -64,10 +63,14 @@ const order: PickupOrder = {
 describe('OrderDetailCard', () => {
   it('habilita guardar solo cuando cambia el conductor asignado', async () => {
     const user = userEvent.setup()
-    render(<OrderDetailCard order={order} />)
+    const { container } = render(<OrderDetailCard order={order} />)
 
     const submit = screen.getByRole('button', { name: 'Guardar cambio' })
     expect(submit).toBeDisabled()
+
+    expect(container.querySelector('[data-slot="card"]')).not.toBeInTheDocument()
+    expect(container.querySelector('.lucide-arrow-down')).toHaveClass('sm:hidden')
+    expect(container.querySelector('.lucide-arrow-right')).toHaveClass('sm:block')
 
     await user.selectOptions(screen.getByLabelText('Cambiar conductor'), 'driver-laura')
     expect(submit).toBeEnabled()

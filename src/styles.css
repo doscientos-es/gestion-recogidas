@@ -174,15 +174,19 @@ select {
 }
 .inbox-grid {
   display: flex;
+  min-height: 0;
   min-width: 0;
   flex: 1;
   flex-direction: column;
 }
 .inbox-list {
   display: flex;
+  min-height: 0;
   flex-direction: column;
+  flex: 1;
   gap: 0.75rem;
   min-width: 0;
+  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 0.9rem;
   background: var(--background);
@@ -243,8 +247,12 @@ select {
 }
 .inbox-rows {
   display: grid;
+  min-height: 0;
+  flex: 1;
   align-content: start;
   gap: 0.3rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
 }
 .inbox-row {
   display: grid;
@@ -292,25 +300,6 @@ select {
   font-size: 0.78rem;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-/* La lista concentra el espacio disponible; el detalle se muestra en un drawer modal. */
-@media (min-width: 1024px) {
-  .inbox-grid {
-    min-height: 0;
-  }
-  .inbox-list {
-    height: 100%;
-    min-height: 0;
-  }
-  .inbox-list {
-    overflow: hidden;
-  }
-  .inbox-rows {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    padding-right: 0.25rem;
-  }
 }
 .trip-detail-drawer {
   height: min(85svh, 52rem);
@@ -519,32 +508,6 @@ select {
 .calendar-event {
   box-shadow: 0 4px 15px rgb(18 60 70 / 0.06);
 }
-.plate {
-  width: fit-content;
-  border: 2px solid #1e293b;
-  border-left: 0.8rem solid #2454a6;
-  border-radius: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  background: #fff;
-  color: #111827;
-  font-family: ui-monospace, monospace;
-  font-size: 1rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-}
-.progress-track {
-  height: 0.4rem;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--muted);
-}
-.progress-track span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--primary);
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

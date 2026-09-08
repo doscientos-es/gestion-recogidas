@@ -1,17 +1,16 @@
 # Gestión de recogidas
 
 Demo comercial del flujo completo de transporte: entrada de una solicitud con adjunto,
-creación de la orden, planificación, asignación de conductor y vehículo, aviso por email,
+creación de la orden, planificación, asignación de conductor, aviso por email,
 WhatsApp, calendario, cierre del viaje y preparación de la factura para Kabiku.
 
 ## Recorrido de demostración
 
 1. En **Dashboard**, abrir la solicitud de Logística Ibérica recibida por correo.
 2. En **Viajes recibidos**, crear la orden a partir del adjunto ya analizado.
-3. Asignar a David Roca y la Mercedes Sprinter.
+3. Asignar a David Roca.
 4. Abrir el WhatsApp precompletado y descargar la invitación `.ics`.
 5. Marcar el viaje como completado y enviarlo a Kabiku desde **Facturación**.
-6. Revisar disponibilidad y mantenimiento en **Vehículos** y abrir Movildata.
 
 Los datos son sintéticos pero concretos. El modo inicial persiste interacciones en
 `localStorage`, por lo que la demo funciona sin servicios externos ni credenciales.
@@ -22,7 +21,7 @@ Los datos son sintéticos pero concretos. El modo inicial persiste interacciones
 | ---------------------------------------- | ----------------------------------------------------------------- |
 | `src/features/operations/application`    | Tipos, estado y reglas del workflow.                              |
 | `src/features/operations/infrastructure` | Persistencia local/Supabase y notificaciones.                     |
-| `src/features/operations/ui`             | Dashboard, viajes, calendario, facturación y flota.               |
+| `src/features/operations/ui`             | Viajes, calendario y gestión de conductores.                      |
 | `api/inbound-email.ts`                   | Función Vercel que verifica webhooks de Resend y persiste emails. |
 | `src/routes`                             | Rutas tipadas de TanStack Router.                                 |
 
@@ -54,5 +53,5 @@ Copiar `.env.example` a `.env.local`. Para la presentación no hace falta modifi
 - En Vercel, seleccionar este directorio como root; el framework se detecta como Vite.
 - `vercel.json` conserva las rutas de la SPA y deja `/api/inbound-email` como función.
 
-Kabiku y Movildata se abren como integraciones externas. Sus escrituras permanecen en
-modo demostración hasta disponer de documentación y credenciales API aprobadas.
+Kabiku se abre como integración externa. Sus escrituras permanecen en modo demostración
+hasta disponer de documentación y credenciales API aprobadas.

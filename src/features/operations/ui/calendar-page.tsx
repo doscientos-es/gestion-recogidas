@@ -28,7 +28,7 @@ export function CalendarPage() {
         <PageHeaderHeading>
           <PageHeaderTitle>Calendario</PageHeaderTitle>
           <PageHeaderDescription>
-            Planificación compartida de recogidas, conductores y vehículos.
+            Planificación compartida de recogidas y conductores.
           </PageHeaderDescription>
         </PageHeaderHeading>
         <Badge>

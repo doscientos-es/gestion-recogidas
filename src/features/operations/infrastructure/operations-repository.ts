@@ -1,5 +1,4 @@
 import { createBrowserSupabaseClient } from '../../../shared/lib/supabase/client'
-
 import { DRIVER_PAGE_SIZE, type DriverPage } from '../application/driver-queries'
 import type { Driver, OperationsState, PickupOrder } from '../application/types'
 import { createSeedState } from './seed-state'
@@ -16,7 +15,6 @@ function isOperationsState(value: unknown): value is OperationsState {
   return (
     Array.isArray(candidate.orders) &&
     Array.isArray(candidate.drivers) &&
-    Array.isArray(candidate.vehicles) &&
     Array.isArray(candidate.activity)
   )
 }
@@ -24,19 +22,47 @@ function isOperationsState(value: unknown): value is OperationsState {
 /** Adapta los datos guardados antes de simplificar el flujo de recogidas. */
 function normalizeOperationsState(state: OperationsState): OperationsState {
   return {
-    ...state,
+    activity: state.activity,
     drivers: state.drivers.map((driver) => ({ ...driver, isExternal: driver.isExternal === true })),
     orders: state.orders.map((item) => {
       const {
-        kabikuState: _legacyKabikuState,
+        id,
+        reference,
+        customer,
+        pickupAddress,
+        pickupCity,
+        deliveryAddress,
+        deliveryCity,
+        scheduledAt,
+        cargo,
+        weightKg,
+        amountCents,
+        source,
         status,
-        ...order
-      } = item as Omit<PickupOrder, 'status'> & {
-        kabikuState?: unknown
-        status: string
-      }
+        attachmentName,
+        driverId,
+        calendarState,
+        emailState,
+        receivedAt,
+      } = item as Omit<PickupOrder, 'status'> & { status: string }
       return {
-        ...order,
+        id,
+        reference,
+        customer,
+        pickupAddress,
+        pickupCity,
+        deliveryAddress,
+        deliveryCity,
+        scheduledAt,
+        cargo,
+        weightKg,
+        amountCents,
+        source,
+        attachmentName,
+        driverId,
+        calendarState,
+        emailState,
+        receivedAt,
         status:
           status === 'received' || status === 'pending_assignment'
             ? 'pending_assignment'

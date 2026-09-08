@@ -22,7 +22,7 @@ interface OperationsContextValue {
   saving: boolean
   error: string | undefined
   clearError: () => void
-  assign: (orderId: string, driverId: string, vehicleId: string) => Promise<void>
+  assign: (orderId: string, driverId: string) => Promise<void>
   addManual: (order: PickupOrder) => void
   updateOrder: (orderId: string, patch: Partial<PickupOrder>) => void
   addDriver: (driver: Driver) => void
@@ -83,9 +83,9 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
       refresh: async () => {
         await query.refetch()
       },
-      assign: async (orderId, driverId, vehicleId) => {
-        if (!commit((value) => assignOrder(value, orderId, driverId, vehicleId))) {
-          setError('No se puede asignar: revisa que el viaje y el vehículo estén disponibles.')
+      assign: async (orderId, driverId) => {
+        if (!commit((value) => assignOrder(value, orderId, driverId))) {
+          setError('No se puede asignar: revisa el viaje y el conductor seleccionados.')
           return
         }
       },

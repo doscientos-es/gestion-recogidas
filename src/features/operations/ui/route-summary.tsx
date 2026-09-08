@@ -1,4 +1,4 @@
-import { ArrowRight, MapPin } from 'lucide-react'
+import { ArrowDown, ArrowRight, MapPin } from 'lucide-react'
 
 import type { PickupOrder } from '../application/types'
 
@@ -23,7 +23,8 @@ export function RouteSummary({
         city={order.pickupCity}
         compact={compact}
       />
-      <ArrowRight aria-hidden className="text-muted-foreground size-4 shrink-0" />
+      <ArrowDown aria-hidden className="text-muted-foreground size-4 shrink-0 sm:hidden" />
+      <ArrowRight aria-hidden className="text-muted-foreground hidden size-4 shrink-0 sm:block" />
       <Location
         label="Entrega"
         address={order.deliveryAddress}

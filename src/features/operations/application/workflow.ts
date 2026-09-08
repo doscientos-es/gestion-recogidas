@@ -1,4 +1,4 @@
-import type { Driver, OperationsState, PickupOrder, Vehicle } from './types'
+import type { Driver, OperationsState, PickupOrder } from './types'
 
 function activity(title: string, detail: string, tone: 'info' | 'success' | 'warning') {
   return { id: crypto.randomUUID(), title, detail, at: 'Ahora', tone }
@@ -8,18 +8,10 @@ export function assignOrder(
   state: OperationsState,
   orderId: string,
   driverId: string,
-  vehicleId = '',
 ): OperationsState {
   const order = state.orders.find((item) => item.id === orderId)
   const driver = state.drivers.find((item) => item.id === driverId)
-  const vehicle = vehicleId ? state.vehicles.find((item) => item.id === vehicleId) : undefined
-  if (
-    !order ||
-    !['pending_assignment', 'assigned'].includes(order.status) ||
-    !driver ||
-    (vehicleId && (!vehicle || vehicle.status !== 'available'))
-  )
-    return state
+  if (!order || !['pending_assignment', 'assigned'].includes(order.status) || !driver) return state
   return {
     ...state,
     orders: state.orders.map((item) =>
@@ -27,18 +19,12 @@ export function assignOrder(
         ? {
             ...item,
             driverId,
-            vehicleId,
             status: 'assigned',
             calendarState: 'sent',
             emailState: 'prepared',
           }
         : item,
     ),
-    vehicles: vehicleId
-      ? state.vehicles.map((item) =>
-          item.id === vehicleId ? { ...item, status: 'on_route' } : item,
-        )
-      : state.vehicles,
     activity: [
       activity('Conductor asignado', `${order.reference} · ${driver.name}`, 'success'),
       ...state.activity,
@@ -103,24 +89,18 @@ export function buildWhatsAppUrl(order: PickupOrder, driver: Driver): string {
   return `https://wa.me/${driver.phone}?text=${encodeURIComponent(message)}`
 }
 
-export function buildCalendarHref(order: PickupOrder, driver?: Driver, vehicle?: Vehicle): string {
-  return `data:text/calendar;charset=utf-8,${encodeURIComponent(buildCalendarContent(order, driver, vehicle))}`
+export function buildCalendarHref(order: PickupOrder, driver?: Driver): string {
+  return `data:text/calendar;charset=utf-8,${encodeURIComponent(buildCalendarContent(order, driver))}`
 }
 
-export function buildCalendarContent(
-  order: PickupOrder,
-  driver?: Driver,
-  vehicle?: Vehicle,
-): string {
+export function buildCalendarContent(order: PickupOrder, driver?: Driver): string {
   const start = new Date(order.scheduledAt)
   const end = new Date(start.getTime() + 90 * 60 * 1000)
   const date = (value: Date) =>
     value.toISOString().replaceAll('-', '').replaceAll(':', '').replace('.000', '')
   const escapeText = (value: string) =>
     value.replaceAll('\\', '\\\\').replaceAll(',', '\\,').replaceAll(';', '\\;')
-  const description = escapeText(
-    `${order.cargo} · ${driver?.name ?? 'Conductor pendiente'} · ${vehicle?.plate ?? 'Vehículo pendiente'}`,
-  )
+  const description = escapeText(`${order.cargo} · ${driver?.name ?? 'Conductor pendiente'}`)
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',

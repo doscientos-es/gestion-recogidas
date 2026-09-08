@@ -11,16 +11,6 @@ export interface Driver {
   isExternal: boolean
 }
 
-export interface Vehicle {
-  id: string
-  plate: string
-  model: string
-  type: string
-  status: 'available' | 'on_route' | 'maintenance'
-  odometerKm: number
-  nextServiceKm: number
-}
-
 export interface PickupOrder {
   id: string
   reference: string
@@ -37,7 +27,6 @@ export interface PickupOrder {
   status: OrderStatus
   attachmentName?: string
   driverId?: string
-  vehicleId?: string
   calendarState: IntegrationState
   emailState: IntegrationState
   receivedAt: string
@@ -54,6 +43,5 @@ export interface ActivityItem {
 export interface OperationsState {
   orders: PickupOrder[]
   drivers: Driver[]
-  vehicles: Vehicle[]
   activity: ActivityItem[]
 }

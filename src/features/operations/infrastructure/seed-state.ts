@@ -1,10 +1,4 @@
-import type {
-  ActivityItem,
-  Driver,
-  OperationsState,
-  PickupOrder,
-  Vehicle,
-} from '../application/types'
+import type { ActivityItem, Driver, OperationsState, PickupOrder } from '../application/types'
 
 const seedState: OperationsState = {
   orders: [
@@ -42,7 +36,6 @@ const seedState: OperationsState = {
       source: 'email',
       status: 'assigned',
       driverId: 'driver-marc',
-      vehicleId: 'vehicle-ducato',
       calendarState: 'sent',
       emailState: 'sent',
       receivedAt: '2026-09-07T16:40:00+02:00',
@@ -62,7 +55,6 @@ const seedState: OperationsState = {
       source: 'manual',
       status: 'assigned',
       driverId: 'driver-laura',
-      vehicleId: 'vehicle-transit',
       calendarState: 'sent',
       emailState: 'sent',
       receivedAt: '2026-09-06T10:05:00+02:00',
@@ -96,36 +88,6 @@ const seedState: OperationsState = {
       isExternal: false,
     },
   ],
-  vehicles: [
-    {
-      id: 'vehicle-ducato',
-      plate: '4821 MZT',
-      model: 'Fiat Ducato',
-      type: 'Furgón L3H2',
-      status: 'on_route',
-      odometerKm: 87420,
-      nextServiceKm: 90000,
-    },
-    {
-      id: 'vehicle-sprinter',
-      plate: '7394 LWN',
-      model: 'Mercedes Sprinter',
-      type: 'Furgón L2H2',
-      status: 'available',
-      odometerKm: 64210,
-      nextServiceKm: 70000,
-    },
-    {
-      id: 'vehicle-daily',
-      plate: '2158 NBG',
-      model: 'Iveco Daily',
-      type: 'Caja con plataforma',
-      status: 'maintenance',
-      odometerKm: 112860,
-      nextServiceKm: 113000,
-    },
-    ...createDemoVehicles(),
-  ],
   activity: [
     {
       id: 'act-email',
@@ -143,8 +105,8 @@ const seedState: OperationsState = {
     },
     {
       id: 'act-maintenance',
-      title: 'Revisión próxima',
-      detail: 'Iveco Daily · faltan 140 km',
+      title: 'Datos pendientes',
+      detail: 'REC-2026-0184 · Falta confirmar la franja horaria',
       at: '08:30',
       tone: 'warning',
     },
@@ -183,20 +145,12 @@ function createBulkOrders(): PickupOrder[] {
     'driver-david',
     ...createDemoDrivers().map((driver) => driver.id),
   ]
-  const vehicleIds = [
-    'vehicle-ducato',
-    ...createDemoVehicles()
-      .filter((vehicle) => vehicle.status === 'on_route')
-      .map((vehicle) => vehicle.id),
-  ]
-
   return Array.from({ length: 117 }, (_, index) => {
     const number = 185 + index
     const day = String(7 + (index % 19)).padStart(2, '0')
     const hour = String(6 + (index % 13)).padStart(2, '0')
     const assigned = index % 3 === 0 || index % 7 === 0
     const driverId = driverIds[index % driverIds.length] ?? 'driver-marc'
-    const vehicleId = vehicleIds[index % vehicleIds.length] ?? 'vehicle-ducato'
     return {
       id: `ord-2609${day}-${number}`,
       reference: `REC-2026-${String(number).padStart(4, '0')}`,
@@ -211,7 +165,7 @@ function createBulkOrders(): PickupOrder[] {
       amountCents: 9500 + ((index * 2375) % 85000),
       source: index % 4 === 0 ? 'manual' : 'email',
       status: assigned ? 'assigned' : 'pending_assignment',
-      ...(assigned ? { driverId, vehicleId } : {}),
+      ...(assigned ? { driverId } : {}),
       ...(index % 4 === 0 ? { attachmentName: `orden-recogida-${number}.pdf` } : {}),
       calendarState: assigned ? 'sent' : index % 2 === 0 ? 'prepared' : 'pending',
       emailState: assigned ? 'sent' : index % 3 === 0 ? 'prepared' : 'pending',
@@ -248,38 +202,14 @@ function createDemoDrivers(): Driver[] {
   }))
 }
 
-function createDemoVehicles(): Vehicle[] {
-  const fleet: [string, string, string, string, Vehicle['status'], number, number][] = [
-    ['transit', 'Ford Transit', 'Furgón L3H3', '6182 MKS', 'on_route', 78540, 85000],
-    ['crafter', 'Volkswagen Crafter', 'Furgón L4', '1946 NPF', 'on_route', 92310, 100000],
-    ['boxer', 'Peugeot Boxer', 'Furgón L2H2', '3275 MTH', 'available', 48120, 55000],
-    ['master', 'Renault Master', 'Furgón L3H2', '8654 LXR', 'available', 53600, 60000],
-    ['atego', 'Mercedes Atego', 'Camión rígido 7,5 t', '5128 MZL', 'on_route', 136800, 145000],
-    ['canter', 'Fuso Canter', 'Caja abierta', '7239 MJD', 'maintenance', 104950, 105000],
-    ['movano', 'Opel Movano', 'Furgón L3H2', '3184 MLV', 'available', 69240, 75000],
-    ['jumper', 'Citroën Jumper', 'Furgón frigorífico', '6921 NCM', 'on_route', 81780, 90000],
-    ['volvo', 'Volvo FL', 'Camión rígido 12 t', '4570 KTZ', 'available', 156400, 170000],
-    ['e-transit', 'Ford E-Transit', 'Furgón eléctrico', '8842 NNW', 'available', 32400, 40000],
-  ]
-  return fleet.map(([id, model, type, plate, status, odometerKm, nextServiceKm]) => ({
-    id: `vehicle-${id}`,
-    model,
-    type,
-    plate,
-    status,
-    odometerKm,
-    nextServiceKm,
-  }))
-}
-
 function createDemoActivity(): ActivityItem[] {
   const events: [string, string, ActivityItem['tone']][] = [
     ['Asignación confirmada', 'REC-2026-0201 · Anna Pujol', 'success'],
     ['Nuevo correo procesado', 'REC-2026-0214 · Datos extraídos automáticamente', 'info'],
-    ['Revisión programada', 'Fuso Canter · entrada en taller mañana', 'warning'],
+    ['Revisión de datos', 'REC-2026-0218 · Falta validar el peso declarado', 'warning'],
     ['Calendario actualizado', 'REC-2026-0196 · Evento enviado al conductor', 'success'],
     ['Adjunto validado', 'REC-2026-0225 · Albarán y orden de recogida', 'info'],
-    ['Capacidad limitada', 'Mercedes Atego · ruta completa', 'warning'],
+    ['Capacidad limitada', 'Zona norte · franjas horarias completas', 'warning'],
     ['Conductor disponible', 'Raquel Martín · turno de tarde', 'success'],
     ['Nueva recogida manual', 'REC-2026-0233 · Creada por operaciones', 'info'],
   ]

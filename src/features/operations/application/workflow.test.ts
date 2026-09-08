@@ -16,35 +16,21 @@ describe('pickup workflow', () => {
     const state = createSeedState()
     expect(state.orders).toHaveLength(120)
     expect(state.drivers).toHaveLength(15)
-    expect(state.vehicles).toHaveLength(13)
     expect(state.activity.length).toBeGreaterThanOrEqual(10)
 
     for (const order of state.orders.filter((item) => item.status === 'assigned')) {
       expect(state.drivers.some((driver) => driver.id === order.driverId)).toBe(true)
-      expect(state.vehicles.some((vehicle) => vehicle.id === order.vehicleId)).toBe(true)
     }
   })
 
   it('assigns a pickup to a driver', () => {
-    const state = assignOrder(
-      createSeedState(),
-      'ord-260910-184',
-      'driver-david',
-      'vehicle-sprinter',
-    )
+    const state = assignOrder(createSeedState(), 'ord-260910-184', 'driver-david')
     expect(state.orders[0]).toMatchObject({ status: 'assigned', emailState: 'prepared' })
-    expect(state.vehicles.find((vehicle) => vehicle.id === 'vehicle-sprinter')?.status).toBe(
-      'on_route',
-    )
   })
 
-  it('rejects assignment with a busy vehicle or from an invalid status', () => {
+  it('rejects assignment with an unknown driver', () => {
     const pending = createSeedState()
-    expect(assignOrder(pending, 'ord-260910-184', 'driver-david', 'vehicle-ducato')).toBe(pending)
-    const assigned = assignOrder(pending, 'ord-260910-184', 'driver-david', 'vehicle-sprinter')
-    expect(assignOrder(assigned, 'ord-260910-184', 'driver-laura', 'vehicle-sprinter')).toBe(
-      assigned,
-    )
+    expect(assignOrder(pending, 'ord-260910-184', 'driver-unknown')).toBe(pending)
   })
 
   it('builds an encoded WhatsApp Web message with both addresses', () => {

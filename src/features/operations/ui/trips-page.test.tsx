@@ -59,7 +59,7 @@ const { orders } = vi.hoisted(() => {
 
 vi.mock('../application/operations-context', () => ({
   useOperations: () => ({
-    state: { orders, drivers: [], vehicles: [], activity: [] },
+    state: { orders, drivers: [], activity: [] },
     assign: vi.fn(async () => {}),
     updateOrder: vi.fn(),
   }),
