@@ -1,6 +1,6 @@
 import { Button, Card, CardContent, CardHeader, CardTitle, Label } from '@doscientos/ui'
-import { MailCheck, MessageCircle, Pencil } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import { CalendarClock, MailCheck, MessageCircle, Package, Pencil, WalletCards } from 'lucide-react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 
 import { useOperations } from '../application/operations-context'
 import type { Driver, PickupOrder } from '../application/types'
@@ -43,24 +43,36 @@ export function OrderDetailCard({ order }: { order: PickupOrder }) {
         ) : (
           <>
             <RouteSummary order={order} />
-            <div className="grid gap-3 rounded-xl border p-4 sm:grid-cols-3">
-              <Info label="Fecha y hora" value={formatScheduledAt(order.scheduledAt)} />
-              <Info label="Carga" value={`${order.cargo} · ${order.weightKg} kg`} />
-              <Info label="Importe" value={formatMoney(order.amountCents)} />
+            <div className="detail-summary">
+              <Info
+                icon={<CalendarClock aria-hidden />}
+                label="Fecha y hora"
+                value={formatScheduledAt(order.scheduledAt)}
+              />
+              <Info
+                icon={<Package aria-hidden />}
+                label="Carga"
+                value={`${order.cargo} · ${order.weightKg} kg`}
+              />
+              <Info
+                icon={<WalletCards aria-hidden />}
+                label="Importe"
+                value={formatMoney(order.amountCents)}
+              />
             </div>
           </>
         )}
         {order.status === 'pending_assignment' || order.status === 'assigned' ? (
-          <div className="bg-primary/5 border-primary/15 space-y-4 rounded-xl border p-4">
+          <div className="driver-assignment">
             <div>
-              <h3 className="font-semibold">
+              <h3 className="text-sm font-semibold">
                 {order.status === 'assigned' ? 'Cambiar conductor' : 'Asignar conductor'}
               </h3>
-              <p className="text-muted-foreground text-sm">
-                El viaje quedará asignado al conductor seleccionado.
+              <p className="text-muted-foreground mt-1 text-xs">
+                Selecciona quién realizará este viaje.
               </p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="driver-assignment-actions">
               <SelectField
                 id="order-driver"
                 label="Conductor"
@@ -71,6 +83,7 @@ export function OrderDetailCard({ order }: { order: PickupOrder }) {
             </div>
             <Button
               isDisabled={!driverId || assigning}
+                size="sm"
               onPress={() => {
                 setAssigning(true)
                 void assign(order.id, driverId, '').finally(() => setAssigning(false))
@@ -254,11 +267,14 @@ function CommunicationActions({ order, driver }: { order: PickupOrder; driver: D
   )
 }
 
-function Info({ label, value }: { label: string; value: string }) {
+function Info({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
-    <div>
-      <p className="text-muted-foreground text-xs">{label}</p>
-      <p className="mt-1 text-sm font-medium">{value}</p>
+    <div className="detail-summary-item">
+      <span className="detail-summary-icon">{icon}</span>
+      <div>
+        <p className="text-muted-foreground text-xs">{label}</p>
+        <p className="mt-1 text-sm font-medium">{value}</p>
+      </div>
     </div>
   )
 }
