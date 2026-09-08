@@ -1,4 +1,11 @@
-import { AppShell, AppShellContent, AppShellHeader, AppShellMain, IconButton } from '@doscientos/ui'
+import {
+  AppShell,
+  AppShellContent,
+  AppShellHeader,
+  AppShellMain,
+  Button,
+  IconButton,
+} from '@doscientos/ui'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { Plus, RefreshCw, Users, X } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -26,6 +33,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
               <output className="sr-only">{loading ? 'Cargando…' : 'Guardando…'}</output>
             ) : null}
             <IconButton
+              className="min-[1024px]:hidden"
               label={loading ? 'Actualizando viajes…' : 'Actualizar viajes'}
               variant="ghost"
               onPress={() => void refresh()}
@@ -33,7 +41,17 @@ export function AppFrame({ children }: { children: ReactNode }) {
             >
               <RefreshCw aria-hidden />
             </IconButton>
+            <Button
+              className="hidden min-[1024px]:inline-flex"
+              variant="ghost"
+              onPress={() => void refresh()}
+              isDisabled={loading}
+            >
+              <RefreshCw aria-hidden />
+              Actualizar
+            </Button>
             <IconButton
+              className="min-[1024px]:hidden"
               label={composing ? 'Cerrar alta de viaje' : 'Nuevo viaje'}
               onPress={() =>
                 void navigate({
@@ -44,13 +62,34 @@ export function AppFrame({ children }: { children: ReactNode }) {
             >
               {composing ? <X aria-hidden /> : <Plus aria-hidden />}
             </IconButton>
+            <Button
+              className="hidden min-[1024px]:inline-flex"
+              onPress={() =>
+                void navigate({
+                  to: '/viajes',
+                  search: { ...(tripsSearch ?? defaultTravelSearch), compose: !composing },
+                })
+              }
+            >
+              {composing ? <X aria-hidden /> : <Plus aria-hidden />}
+              {composing ? 'Cerrar' : 'Nuevo viaje'}
+            </Button>
             <IconButton
+              className="min-[1024px]:hidden"
               label="Gestionar conductores"
               variant="outline"
               onPress={() => void navigate({ to: '/conductores' })}
             >
               <Users aria-hidden />
             </IconButton>
+            <Button
+              className="hidden min-[1024px]:inline-flex"
+              variant="outline"
+              onPress={() => void navigate({ to: '/conductores' })}
+            >
+              <Users aria-hidden />
+              Conductores
+            </Button>
           </div>
         </AppShellHeader>
         {error ? (
