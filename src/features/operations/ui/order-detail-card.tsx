@@ -16,7 +16,7 @@ export function OrderDetailCard({ order }: { order: PickupOrder }) {
   const driver = state.drivers.find((item) => item.id === order.driverId)
 
   return (
-    <div className="space-y-5">
+    <div className="order-detail-content space-y-5">
       <header className="border-b pr-10 pb-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
