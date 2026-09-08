@@ -224,6 +224,67 @@ select {
   flex-direction: column;
   gap: 0.75rem;
 }
+.filter-row select {
+  min-height: 2.25rem;
+}
+.pagination-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.pagination-button {
+  display: grid;
+  min-width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+.pagination-button:hover:not(:disabled):not(.pagination-active) {
+  background: var(--muted);
+}
+.pagination-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.pagination-active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.pagination-ellipsis {
+  padding: 0 0.3rem;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+}
+@media (min-width: 640px) {
+  .filter-row {
+    flex-direction: row;
+  }
+  .filter-row .field-control,
+  .filter-row select {
+    width: auto;
+  }
+  .pagination-bar {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
 .field-label {
   display: block;
   margin-bottom: 0.35rem;

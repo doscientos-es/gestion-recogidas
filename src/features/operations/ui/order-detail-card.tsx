@@ -4,11 +4,7 @@ import { useState } from 'react'
 
 import { useOperations } from '../application/operations-context'
 import type { Driver, PickupOrder } from '../application/types'
-import {
-  buildWhatsAppUrl,
-  formatMoney,
-  formatScheduledAt,
-} from '../application/workflow'
+import { buildWhatsAppUrl, formatMoney, formatScheduledAt } from '../application/workflow'
 import { RouteSummary } from './route-summary'
 import { StatusBadge } from './status-badge'
 
@@ -42,7 +38,9 @@ export function OrderDetailCard({ order }: { order: PickupOrder }) {
         {order.status === 'pending_assignment' || order.status === 'scheduled' ? (
           <div className="bg-primary/5 border-primary/15 space-y-4 rounded-xl border p-4">
             <div>
-              <h3 className="font-semibold">{order.status === 'scheduled' ? 'Cambiar conductor' : 'Asignar conductor'}</h3>
+              <h3 className="font-semibold">
+                {order.status === 'scheduled' ? 'Cambiar conductor' : 'Asignar conductor'}
+              </h3>
               <p className="text-muted-foreground text-sm">
                 El viaje quedará confirmado al asignar un conductor.
               </p>
@@ -63,7 +61,11 @@ export function OrderDetailCard({ order }: { order: PickupOrder }) {
                 void assign(order.id, driverId, '').finally(() => setAssigning(false))
               }}
             >
-              {assigning ? 'Guardando…' : order.status === 'scheduled' ? 'Guardar cambio' : 'Confirmar viaje'}
+              {assigning
+                ? 'Guardando…'
+                : order.status === 'scheduled'
+                  ? 'Guardar cambio'
+                  : 'Confirmar viaje'}
             </Button>
           </div>
         ) : null}
@@ -87,18 +89,14 @@ function InboundAction({ order, onProcess }: { order: PickupOrder; onProcess: ()
   )
 }
 
-function CommunicationActions({
-  order,
-  driver,
-}: {
-  order: PickupOrder
-  driver: Driver
-}) {
+function CommunicationActions({ order, driver }: { order: PickupOrder; driver: Driver }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 text-sm">
         <MailCheck aria-hidden className="text-success size-4" />
-        <span>Conductor asignado: {driver.name} · {driver.phone}</span>
+        <span>
+          Conductor asignado: {driver.name} · {driver.phone}
+        </span>
       </div>
       <div className="flex flex-wrap gap-2">
         <a
@@ -110,7 +108,9 @@ function CommunicationActions({
           <MessageCircle aria-hidden />
           Abrir WhatsApp
         </a>
-        <a className="action-link" href="#kabiku">Ver en Kabiku</a>
+        <a className="action-link" href="#kabiku">
+          Ver en Kabiku
+        </a>
       </div>
     </div>
   )

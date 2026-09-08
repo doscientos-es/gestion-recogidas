@@ -16,6 +16,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { ArrowRight, CalendarClock, CircleCheck, Inbox, Route, Sparkles } from 'lucide-react'
 
 import { useOperations } from '../application/operations-context'
+import { defaultTravelSearch } from '../application/travel-search'
 import { formatMoney } from '../application/workflow'
 
 export function DashboardPage() {
@@ -25,7 +26,9 @@ export function DashboardPage() {
   const pendingAssignment = state.orders.filter(
     (order) => order.status === 'pending_assignment',
   ).length
-  const active = state.orders.filter((order) => ['received', 'pending_assignment'].includes(order.status)).length
+  const active = state.orders.filter((order) =>
+    ['received', 'pending_assignment'].includes(order.status),
+  ).length
   const confirmed = state.orders.filter((order) => order.status === 'scheduled')
   const nextOrder = [...state.orders]
     .filter(
@@ -107,14 +110,17 @@ export function DashboardPage() {
                 isDisabled={loading || saving}
                 onPress={() => {
                   processOrder(received.id)
-                  void navigate({ to: '/viajes', search: { q: '', status: 'pending_assignment' } })
+                  void navigate({
+                    to: '/viajes',
+                    search: { ...defaultTravelSearch, status: 'pending_assignment' },
+                  })
                 }}
               >
                 Crear orden y asignar
               </Button>
               <Link
                 to="/viajes"
-                search={{ q: '', status: 'all' }}
+                search={{ ...defaultTravelSearch }}
                 className="icon-link"
                 aria-label="Abrir viajes"
               >

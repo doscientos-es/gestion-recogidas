@@ -1,4 +1,4 @@
-import type { OperationsState } from '../application/types'
+import type { OperationsState, PickupOrder } from '../application/types'
 
 const seedState: OperationsState = {
   orders: [
@@ -64,6 +64,30 @@ const seedState: OperationsState = {
       kabikuState: 'prepared',
       receivedAt: '2026-09-06T10:05:00+02:00',
     },
+    ...Array.from({ length: 20 }, (_, index): PickupOrder => {
+      const day = String(9 + (index % 5)).padStart(2, '0')
+      const hour = String(7 + (index % 10)).padStart(2, '0')
+      const number = 185 + index
+      return {
+        id: `ord-2609${day}-${number}`,
+        reference: `REC-2026-0${number}`,
+        customer: `Cliente Lote ${index + 1} SL`,
+        pickupAddress: `Polígon Indústrial, nau ${index + 3}`,
+        pickupCity: ['Barcelona', 'Mataró', 'Sabadell', 'Terrassa', 'Badalona'][index % 5] ?? '',
+        deliveryAddress: `Carrer del Progrés, ${10 + index}`,
+        deliveryCity: ['Girona', 'Granollers', 'Martorell', 'Mataró', 'Barcelona'][index % 5] ?? '',
+        scheduledAt: `2026-09-${day}T${hour}:00:00+02:00`,
+        cargo: index % 2 === 0 ? 'Material paletizado' : 'Carga fraccionada',
+        weightKg: 120 + index * 25,
+        amountCents: 12000 + index * 1350,
+        source: index % 3 === 0 ? 'manual' : 'email',
+        status: statusFor(index),
+        calendarState: 'pending',
+        emailState: 'pending',
+        kabikuState: 'pending',
+        receivedAt: `2026-09-0${(index % 8) + 1}T08:00:00+02:00`,
+      }
+    }),
   ],
   drivers: [
     {
@@ -144,4 +168,15 @@ const seedState: OperationsState = {
 
 export function createSeedState(): OperationsState {
   return structuredClone(seedState)
+}
+
+function statusFor(index: number): PickupOrder['status'] {
+  const statuses = [
+    'received',
+    'pending_assignment',
+    'scheduled',
+    'in_progress',
+    'completed',
+  ] as const
+  return statuses[index % statuses.length] ?? 'pending_assignment'
 }

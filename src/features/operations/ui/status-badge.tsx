@@ -22,7 +22,9 @@ export function StatusBadge({ status }: { status: OrderStatus }) {
           ? Clock3
           : status === 'in_progress'
             ? Route
-            : status === 'invoiced' ? FileDown : CircleCheck
+            : status === 'invoiced'
+              ? FileDown
+              : CircleCheck
   const variant =
     status === 'received' || status === 'pending_assignment'
       ? 'warning'

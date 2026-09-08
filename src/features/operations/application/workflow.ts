@@ -55,7 +55,11 @@ export function assignOrder(
           }
         : item,
     ),
-    vehicles: vehicleId ? state.vehicles.map((item) => item.id === vehicleId ? { ...item, status: 'on_route' } : item) : state.vehicles,
+    vehicles: vehicleId
+      ? state.vehicles.map((item) =>
+          item.id === vehicleId ? { ...item, status: 'on_route' } : item,
+        )
+      : state.vehicles,
     activity: [
       activity('Conductor asignado', `${order.reference} · ${driver.name}`, 'success'),
       ...state.activity,

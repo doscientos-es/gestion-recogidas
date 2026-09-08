@@ -9,11 +9,12 @@ import {
   PageHeaderHeading,
   PageHeaderTitle,
 } from '@doscientos/ui'
-import { Plus, RefreshCw, Search, X } from 'lucide-react'
-import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
+import { ChevronLeft, ChevronRight, Plus, RefreshCw, Search, X } from 'lucide-react'
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
 
 import { useOperations } from '../application/operations-context'
-import type { TravelSearch } from '../application/travel-search'
+import { defaultTravelSearch, type TravelSearch } from '../application/travel-search'
+import { queryTrips, tripCities } from '../application/trip-queries'
 import type { PickupOrder } from '../application/types'
 import { formatScheduledAt } from '../application/workflow'
 import { OrderDetailCard } from './order-detail-card'
@@ -30,20 +31,18 @@ export function TripsPage({
   const { state, refresh, loading } = useOperations()
   const [selectedId, setSelectedId] = useState(state.orders[0]?.id)
   const [showForm, setShowForm] = useState(false)
-  const orders = useMemo(
-    () =>
-      state.orders.filter((order) => {
-        const query = search.q.toLocaleLowerCase('es')
-        return (
-          (search.status === 'all' || order.status === search.status) &&
-          (!query ||
-            `${order.reference} ${order.customer} ${order.pickupCity} ${order.deliveryCity}`
-              .toLocaleLowerCase('es')
-              .includes(query))
-        )
-      }),
-    [search, state.orders],
-  )
+  // El texto escrito se mantiene en un estado local y viaja a la URL con retardo:
+  // así no se dispara una consulta por pulsación de tecla.
+  const [queryDraft, setQueryDraft] = useState(search.q)
+  useEffect(() => setQueryDraft(search.q), [search.q])
+  useEffect(() => {
+    if (queryDraft === search.q) return
+    const timer = setTimeout(() => onSearchChange({ q: queryDraft, page: 1 }), 300)
+    return () => clearTimeout(timer)
+  }, [queryDraft, search.q, onSearchChange])
+  const cities = useMemo(() => tripCities(state.orders), [state.orders])
+  const result = useMemo(() => queryTrips(state.orders, search), [state.orders, search])
+  const orders = result.rows
   const selected = orders.find((order) => order.id === selectedId) ?? orders[0]
   return (
     <div className="space-y-6">
@@ -55,7 +54,10 @@ export function TripsPage({
           </PageHeaderDescription>
         </PageHeaderHeading>
         <PageHeaderActions>
-          <Button variant="outline" onPress={() => void refresh()} isDisabled={loading}><RefreshCw aria-hidden />Actualizar</Button>
+          <Button variant="outline" onPress={() => void refresh()} isDisabled={loading}>
+            <RefreshCw aria-hidden />
+            Actualizar
+          </Button>
           <Button onPress={() => setShowForm((value) => !value)}>
             {showForm ? <X aria-hidden /> : <Plus aria-hidden />}
             {showForm ? 'Cerrar formulario' : 'Nuevo viaje'}
@@ -66,7 +68,7 @@ export function TripsPage({
         <ManualOrderForm
           onCreated={(orderId) => {
             setSelectedId(orderId)
-            onSearchChange({ q: '', status: 'all' })
+            onSearchChange({ ...defaultTravelSearch })
             setShowForm(false)
           }}
         />
@@ -79,10 +81,8 @@ export function TripsPage({
           />
           <Input
             className="pl-9"
-            value={search.q}
-            onChange={(event: ChangeEvent<HTMLInputElement>) =>
-              onSearchChange({ q: event.target.value })
-            }
+            value={queryDraft}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => setQueryDraft(event.target.value)}
             placeholder="Buscar por referencia, cliente o ciudad"
           />
         </div>
@@ -90,7 +90,7 @@ export function TripsPage({
           className="field-control sm:w-48"
           value={search.status}
           onChange={(event) =>
-            onSearchChange({ status: event.target.value as TravelSearch['status'] })
+            onSearchChange({ status: event.target.value as TravelSearch['status'], page: 1 })
           }
         >
           <option value="all">Todos los viajes</option>
@@ -98,6 +98,44 @@ export function TripsPage({
           <option value="pending_assignment">Por asignar</option>
           <option value="scheduled">Confirmados</option>
           <option value="in_progress">En curso</option>
+          <option value="completed">Completados</option>
+          <option value="invoiced">Facturados</option>
+        </select>
+        <select
+          className="field-control sm:w-44"
+          value={search.source}
+          onChange={(event) =>
+            onSearchChange({ source: event.target.value as TravelSearch['source'], page: 1 })
+          }
+        >
+          <option value="all">Toda procedencia</option>
+          <option value="email">Importados por correo</option>
+          <option value="manual">Alta manual</option>
+        </select>
+        {cities.length > 1 ? (
+          <select
+            className="field-control sm:w-44"
+            value={search.city}
+            onChange={(event) => onSearchChange({ city: event.target.value, page: 1 })}
+          >
+            <option value="">Todas las recogidas</option>
+            {cities.map((city) => (
+              <option key={city} value={city}>
+                Recogida en {city}
+              </option>
+            ))}
+          </select>
+        ) : null}
+        <select
+          className="field-control sm:w-52"
+          value={search.sort}
+          onChange={(event) => onSearchChange({ sort: event.target.value as TravelSearch['sort'] })}
+        >
+          <option value="scheduled_asc">Recogida próxima</option>
+          <option value="scheduled_desc">Recogida tardía</option>
+          <option value="amount_desc">Importe mayor</option>
+          <option value="amount_asc">Importe menor</option>
+          <option value="reference_asc">Referencia</option>
         </select>
       </div>
       <div className="grid gap-5 lg:grid-cols-[0.9fr_1.3fr]">
@@ -124,6 +162,11 @@ export function TripsPage({
               </p>
             </button>
           ))}
+          {result.total === 0 ? (
+            <p className="text-muted-foreground py-8 text-center text-sm">
+              No hay viajes con estos filtros.
+            </p>
+          ) : null}
         </div>
         {selected ? (
           <OrderDetailCard key={selected.id} order={selected} />
@@ -133,7 +176,88 @@ export function TripsPage({
           </Card>
         )}
       </div>
+      <Pagination
+        page={result.page}
+        pageCount={result.pageCount}
+        total={result.total}
+        onPageChange={(page) => onSearchChange({ page })}
+      />
     </div>
+  )
+}
+
+function Pagination({
+  page,
+  pageCount,
+  total,
+  onPageChange,
+}: {
+  page: number
+  pageCount: number
+  total: number
+  onPageChange: (page: number) => void
+}) {
+  // Ventana deslizante: muestra siempre hasta 5 páginas con la actual centrada.
+  const pages = useMemo(() => {
+    const window = 2
+    const start = Math.max(1, Math.min(page - window, pageCount - window * 2))
+    const end = Math.min(pageCount, start + window * 2)
+    const items: (number | 'ellipsis')[] = []
+    for (let index = start; index <= end; index += 1) {
+      items.push(index)
+      if (index === start && start > 1) items.unshift('ellipsis')
+      if (index === end && end < pageCount) items.push('ellipsis')
+    }
+    if (!items.includes(1) && pageCount > 0) items.unshift(1, 'ellipsis')
+    if (!items.includes(pageCount) && pageCount > 0) items.push('ellipsis', pageCount)
+    return [...new Set(items)].filter(
+      (item, index, list) => !(item === 'ellipsis' && list[index - 1] === 'ellipsis'),
+    )
+  }, [page, pageCount])
+  return (
+    <nav className="pagination-bar" aria-label="Paginación de viajes">
+      <p className="text-muted-foreground text-sm">
+        {total} {total === 1 ? 'viaje' : 'viajes'} · página {page} de {pageCount}
+      </p>
+      <div className="pagination-controls">
+        <button
+          type="button"
+          className="pagination-button"
+          onClick={() => onPageChange(page - 1)}
+          disabled={page <= 1}
+          aria-label="Página anterior"
+        >
+          <ChevronLeft aria-hidden className="size-4" />
+        </button>
+        {pages.map((item) =>
+          item === 'ellipsis' ? (
+            <span key="ellipsis" className="pagination-ellipsis" aria-hidden>
+              …
+            </span>
+          ) : (
+            <button
+              type="button"
+              key={item}
+              className={`pagination-button ${item === page ? 'pagination-active' : ''}`}
+              onClick={() => onPageChange(item)}
+              disabled={item === page}
+              aria-current={item === page ? 'page' : undefined}
+            >
+              {item}
+            </button>
+          ),
+        )}
+        <button
+          type="button"
+          className="pagination-button"
+          onClick={() => onPageChange(page + 1)}
+          disabled={page >= pageCount}
+          aria-label="Página siguiente"
+        >
+          <ChevronRight aria-hidden className="size-4" />
+        </button>
+      </div>
+    </nav>
   )
 }
 

@@ -13,12 +13,7 @@ import {
 import { dataMode, loadOperations, saveOperations } from '../infrastructure/operations-repository'
 import { createSeedState } from '../infrastructure/seed-state'
 import type { OperationsState, PickupOrder } from './types'
-import {
-  assignOrder,
-  completeOrder,
-  processInboundOrder,
-  syncWithKabiku,
-} from './workflow'
+import { assignOrder, completeOrder, processInboundOrder, syncWithKabiku } from './workflow'
 
 interface OperationsContextValue {
   state: OperationsState
@@ -84,7 +79,9 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
       saving,
       error: error ?? (query.isError ? 'No se han podido cargar los datos.' : undefined),
       clearError: () => setError(undefined),
-      refresh: async () => { await query.refetch() },
+      refresh: async () => {
+        await query.refetch()
+      },
       processOrder: (orderId) => {
         commit((current) => processInboundOrder(current, orderId))
       },

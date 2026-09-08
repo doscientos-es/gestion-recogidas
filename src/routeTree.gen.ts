@@ -9,10 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
 import { Route as CalendarioRouteImport } from './routes/calendario'
 import { Route as ConductoresRouteImport } from './routes/conductores'
 import { Route as FacturacionRouteImport } from './routes/facturacion'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as VehiculosRouteImport } from './routes/vehiculos'
 import { Route as ViajesRouteImport } from './routes/viajes'
 
@@ -74,29 +74,10 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/calendario'
-    | '/conductores'
-    | '/facturacion'
-    | '/vehiculos'
-    | '/viajes'
+  fullPaths: '/' | '/calendario' | '/conductores' | '/facturacion' | '/vehiculos' | '/viajes'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/calendario'
-    | '/conductores'
-    | '/facturacion'
-    | '/vehiculos'
-    | '/viajes'
-  id:
-    | '__root__'
-    | '/'
-    | '/calendario'
-    | '/conductores'
-    | '/facturacion'
-    | '/vehiculos'
-    | '/viajes'
+  to: '/' | '/calendario' | '/conductores' | '/facturacion' | '/vehiculos' | '/viajes'
+  id: '__root__' | '/' | '/calendario' | '/conductores' | '/facturacion' | '/vehiculos' | '/viajes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
