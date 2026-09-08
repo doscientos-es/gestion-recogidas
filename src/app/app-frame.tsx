@@ -33,7 +33,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
               <output className="sr-only">{loading ? 'Cargando…' : 'Guardando…'}</output>
             ) : null}
             <IconButton
-              className="min-[1024px]:hidden"
+              className="navbar-compact-action"
               label={loading ? 'Actualizando viajes…' : 'Actualizar viajes'}
               variant="ghost"
               onPress={() => void refresh()}
@@ -42,7 +42,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
               <RefreshCw aria-hidden />
             </IconButton>
             <Button
-              className="hidden min-[1024px]:inline-flex"
+              className="navbar-wide-action"
               variant="ghost"
               onPress={() => void refresh()}
               isDisabled={loading}
@@ -51,7 +51,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
               Actualizar
             </Button>
             <IconButton
-              className="min-[1024px]:hidden"
+              className="navbar-compact-action"
               label={composing ? 'Cerrar alta de viaje' : 'Nuevo viaje'}
               onPress={() =>
                 void navigate({
@@ -63,7 +63,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
               {composing ? <X aria-hidden /> : <Plus aria-hidden />}
             </IconButton>
             <Button
-              className="hidden min-[1024px]:inline-flex"
+              className="navbar-wide-action"
               onPress={() =>
                 void navigate({
                   to: '/viajes',
@@ -75,7 +75,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
               {composing ? 'Cerrar' : 'Nuevo viaje'}
             </Button>
             <IconButton
-              className="min-[1024px]:hidden"
+              className="navbar-compact-action"
               label="Gestionar conductores"
               variant="outline"
               onPress={() => void navigate({ to: '/conductores' })}
@@ -83,7 +83,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
               <Users aria-hidden />
             </IconButton>
             <Button
-              className="hidden min-[1024px]:inline-flex"
+              className="navbar-wide-action"
               variant="outline"
               onPress={() => void navigate({ to: '/conductores' })}
             >
