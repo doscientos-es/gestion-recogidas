@@ -27,6 +27,7 @@ interface OperationsContextValue {
   complete: (orderId: string) => void
   invoice: (orderId: string) => void
   addManual: (order: PickupOrder) => void
+  updateOrder: (orderId: string, patch: Partial<PickupOrder>) => void
   reset: () => void
   refresh: () => Promise<void>
 }
@@ -96,6 +97,13 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
       invoice: (orderId) => commit((current) => syncWithKabiku(current, orderId)),
       addManual: (order) =>
         commit((current) => ({ ...current, orders: [order, ...current.orders] })),
+      updateOrder: (orderId, patch) =>
+        commit((current) => ({
+          ...current,
+          orders: current.orders.map((order) =>
+            order.id === orderId ? { ...order, ...patch } : order,
+          ),
+        })),
       reset: () => commit(() => createSeedState()),
     }),
     [commit, error, query.isError, query.isPending, query.refetch, saving, state],

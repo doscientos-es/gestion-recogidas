@@ -1,7 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
-import { DashboardPage } from '@/features/operations'
+import { defaultTravelSearch } from '@/features/operations'
 
+// La bandeja de viajes es la única pantalla de trabajo: la portada entra directa.
 export const Route = createFileRoute('/')({
-  component: DashboardPage,
+  beforeLoad: () => {
+    throw redirect({ to: '/viajes', search: { ...defaultTravelSearch } })
+  },
 })

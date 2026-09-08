@@ -1,6 +1,6 @@
 import { Button, Card, CardContent, CardHeader, CardTitle, Label } from '@doscientos/ui'
-import { MailCheck, MessageCircle } from 'lucide-react'
-import { useState } from 'react'
+import { MailCheck, MessageCircle, Pencil } from 'lucide-react'
+import { useState, type FormEvent } from 'react'
 
 import { useOperations } from '../application/operations-context'
 import type { Driver, PickupOrder } from '../application/types'
@@ -12,6 +12,7 @@ export function OrderDetailCard({ order }: { order: PickupOrder }) {
   const { state, processOrder, assign } = useOperations()
   const [driverId, setDriverId] = useState(order.driverId ?? state.drivers[0]?.id ?? '')
   const [assigning, setAssigning] = useState(false)
+  const [editing, setEditing] = useState(false)
   const driver = state.drivers.find((item) => item.id === order.driverId)
 
   return (
@@ -22,16 +23,33 @@ export function OrderDetailCard({ order }: { order: PickupOrder }) {
             <p className="text-muted-foreground text-xs">{order.reference}</p>
             <CardTitle className="mt-1">{order.customer}</CardTitle>
           </div>
-          <StatusBadge status={order.status} />
+          <div className="flex items-center gap-2">
+            <StatusBadge status={order.status} />
+            <Button
+              variant="outline"
+              size="sm"
+              onPress={() => setEditing((value) => !value)}
+              aria-expanded={editing}
+            >
+              <Pencil aria-hidden />
+              {editing ? 'Cancelar' : 'Editar'}
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-5 pt-5">
-        <RouteSummary order={order} />
-        <div className="grid gap-3 rounded-xl border p-4 sm:grid-cols-3">
-          <Info label="Fecha y hora" value={formatScheduledAt(order.scheduledAt)} />
-          <Info label="Carga" value={`${order.cargo} · ${order.weightKg} kg`} />
-          <Info label="Importe" value={formatMoney(order.amountCents)} />
-        </div>
+        {editing ? (
+          <OrderEditForm order={order} onDone={() => setEditing(false)} />
+        ) : (
+          <>
+            <RouteSummary order={order} />
+            <div className="grid gap-3 rounded-xl border p-4 sm:grid-cols-3">
+              <Info label="Fecha y hora" value={formatScheduledAt(order.scheduledAt)} />
+              <Info label="Carga" value={`${order.cargo} · ${order.weightKg} kg`} />
+              <Info label="Importe" value={formatMoney(order.amountCents)} />
+            </div>
+          </>
+        )}
         {order.status === 'received' ? (
           <InboundAction order={order} onProcess={() => processOrder(order.id)} />
         ) : null}
@@ -72,6 +90,146 @@ export function OrderDetailCard({ order }: { order: PickupOrder }) {
         {driver ? <CommunicationActions order={order} driver={driver} /> : null}
       </CardContent>
     </Card>
+  )
+}
+
+/** Convierte una fecha ISO al valor local que espera un input datetime-local. */
+function toLocalInput(iso: string): string {
+  const date = new Date(iso)
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+function OrderEditForm({ order, onDone }: { order: PickupOrder; onDone: () => void }) {
+  const { updateOrder } = useOperations()
+  const [values, setValues] = useState({
+    customer: order.customer,
+    pickupAddress: order.pickupAddress,
+    pickupCity: order.pickupCity,
+    deliveryAddress: order.deliveryAddress,
+    deliveryCity: order.deliveryCity,
+    date: toLocalInput(order.scheduledAt),
+    cargo: order.cargo,
+    weightKg: String(order.weightKg),
+    amountEuros: (order.amountCents / 100).toFixed(2),
+  })
+  function submit(event: FormEvent) {
+    event.preventDefault()
+    updateOrder(order.id, {
+      customer: values.customer.trim(),
+      pickupAddress: values.pickupAddress.trim(),
+      pickupCity: values.pickupCity.trim(),
+      deliveryAddress: values.deliveryAddress.trim(),
+      deliveryCity: values.deliveryCity.trim(),
+      scheduledAt: new Date(values.date).toISOString(),
+      cargo: values.cargo.trim(),
+      weightKg: Number(values.weightKg),
+      amountCents: Math.round(Number(values.amountEuros) * 100),
+    })
+    onDone()
+  }
+  return (
+    <form className="grid gap-4 rounded-xl border p-4 sm:grid-cols-2" onSubmit={submit}>
+      <EditField
+        label="Cliente"
+        value={values.customer}
+        onChange={(customer) => setValues({ ...values, customer })}
+      />
+      <div>
+        <label className="field-label" htmlFor={`edit-date-${order.id}`}>
+          Fecha y hora
+        </label>
+        <input
+          id={`edit-date-${order.id}`}
+          className="field-control w-full"
+          type="datetime-local"
+          required
+          value={values.date}
+          onChange={(event) => setValues({ ...values, date: event.target.value })}
+        />
+      </div>
+      <EditField
+        label="Dirección de recogida"
+        value={values.pickupAddress}
+        onChange={(pickupAddress) => setValues({ ...values, pickupAddress })}
+      />
+      <EditField
+        label="Ciudad de recogida"
+        value={values.pickupCity}
+        onChange={(pickupCity) => setValues({ ...values, pickupCity })}
+      />
+      <EditField
+        label="Dirección de entrega"
+        value={values.deliveryAddress}
+        onChange={(deliveryAddress) => setValues({ ...values, deliveryAddress })}
+      />
+      <EditField
+        label="Ciudad de entrega"
+        value={values.deliveryCity}
+        onChange={(deliveryCity) => setValues({ ...values, deliveryCity })}
+      />
+      <EditField
+        label="Carga"
+        value={values.cargo}
+        onChange={(cargo) => setValues({ ...values, cargo })}
+      />
+      <EditField
+        label="Peso (kg)"
+        type="number"
+        min="1"
+        value={values.weightKg}
+        onChange={(weightKg) => setValues({ ...values, weightKg })}
+      />
+      <EditField
+        label="Importe (€)"
+        type="number"
+        min="0"
+        step="0.01"
+        value={values.amountEuros}
+        onChange={(amountEuros) => setValues({ ...values, amountEuros })}
+      />
+      <div className="flex items-end gap-2">
+        <Button type="submit">Guardar cambios</Button>
+        <Button type="button" variant="outline" onPress={onDone}>
+          Descartar
+        </Button>
+      </div>
+    </form>
+  )
+}
+
+function EditField({
+  label,
+  value,
+  onChange,
+  type = 'text',
+  min,
+  step,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  type?: 'text' | 'number'
+  min?: string
+  step?: string
+}) {
+  const id = `edit-${label}`
+  return (
+    <div>
+      <label className="field-label" htmlFor={id}>
+        {label}
+      </label>
+      <input
+        id={id}
+        className="field-control w-full"
+        type={type}
+        min={min}
+        step={step}
+        required
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </div>
   )
 }
 

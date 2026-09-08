@@ -1,77 +1,38 @@
-import {
-  AppShell,
-  AppShellContent,
-  AppShellHeader,
-  AppShellMain,
-  AppShellSidebar,
-} from '@doscientos/ui'
+import { AppShell, AppShellContent, AppShellHeader, AppShellMain } from '@doscientos/ui'
 import { Link } from '@tanstack/react-router'
-import { LayoutDashboard, Route, Users } from 'lucide-react'
+import { Users } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-import { useOperations } from '@/features/operations'
+import { defaultTravelSearch, useOperations } from '@/features/operations'
 
 export function AppFrame({ children }: { children: ReactNode }) {
-  const { clearError, error, loading, mode, saving } = useOperations()
-  const items = [
-    { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/viajes', label: 'Viajes recibidos', icon: Route },
-    { to: '/conductores', label: 'Conductores', icon: Users },
-  ] as const
+  const { clearError, error, loading, saving } = useOperations()
   return (
-    <AppShell className="bg-muted/35 flex min-h-svh">
-      <AppShellSidebar className="sidebar hidden p-4 md:block">
-        <Link to="/" className="brand-mark">
-          <span>GR</span>
-          <span>
-            <strong>Gestión</strong>
-            <small>de recogidas</small>
-          </span>
-        </Link>
-        <nav aria-label="Principal" className="mt-8">
-          <div className="space-y-1">
-            {items.map(({ to, label, icon: Icon }) => (
-              <Link
-                key={to}
-                to={to}
-                activeOptions={{ exact: to === '/' }}
-                activeProps={{ className: 'nav-link-active' }}
-                className="nav-link"
-              >
-                <Icon aria-hidden />
-                {label}
-              </Link>
-            ))}
-          </div>
-        </nav>
-        <div className="sidebar-footer">
-          <span className="status-pulse" />
-          <div>
-            <strong>Automatizaciones activas</strong>
-            <small>Última revisión: ahora</small>
-          </div>
-        </div>
-      </AppShellSidebar>
+    <AppShell className="bg-muted/35 min-h-svh">
       <AppShellMain className="min-w-0 flex-1">
-        <AppShellHeader className="flex h-14 items-center justify-between">
-          <span className="text-sm font-semibold md:hidden">Gestión de recogidas</span>
-          <nav aria-label="Navegación móvil" className="mobile-nav md:hidden">
-            {items.map(({ to, label }) => (
-              <Link key={to} to={to} activeProps={{ className: 'mobile-nav-active' }}>
-                {label}
-              </Link>
-            ))}
-          </nav>
-          <span className="ml-auto hidden items-center gap-2 text-xs md:flex">
-            <span className="status-pulse" />
-            {loading
-              ? 'Cargando operaciones…'
-              : saving
-                ? 'Guardando cambios…'
-                : mode === 'supabase'
-                  ? 'Supabase conectado'
-                  : 'Demo segura'}
-          </span>
+        <AppShellHeader className="mx-auto flex h-14 w-full max-w-[100rem] items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link to="/viajes" search={{ ...defaultTravelSearch }} className="brand-mark">
+            <span>GR</span>
+            <span>
+              <strong>Gestión</strong>
+              <small>de recogidas</small>
+            </span>
+          </Link>
+          <div className="flex items-center gap-3">
+            {loading || saving ? (
+              <span className="text-muted-foreground text-xs">
+                {loading ? 'Cargando…' : 'Guardando…'}
+              </span>
+            ) : null}
+            <Link
+              to="/conductores"
+              activeProps={{ className: 'nav-link-active' }}
+              className="nav-link"
+            >
+              <Users aria-hidden />
+              Conductores
+            </Link>
+          </div>
         </AppShellHeader>
         {error ? (
           <div className="operation-alert" role="alert">
@@ -81,7 +42,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
             </button>
           </div>
         ) : null}
-        <AppShellContent className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
+        <AppShellContent className="mx-auto w-full max-w-[100rem] p-4 sm:p-6 lg:p-8">
           <div
             aria-busy={loading}
             className={loading ? 'pointer-events-none opacity-60' : undefined}

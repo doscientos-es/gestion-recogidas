@@ -25,6 +25,8 @@ export type TravelSearch = {
   city: string
   sort: z.infer<typeof sort>
   page: number
+  /** Viaje abierto en el panel de detalle. Vacío significa «el primero de la lista». */
+  selected: string
 }
 
 export const defaultTravelSearch: TravelSearch = {
@@ -34,6 +36,7 @@ export const defaultTravelSearch: TravelSearch = {
   city: '',
   sort: 'scheduled_asc',
   page: 1,
+  selected: '',
 }
 
 /** Viajes mostrados por página en la lista de la ruta /viajes. */
@@ -48,6 +51,7 @@ export function parseTravelSearch(value: unknown): TravelSearch {
       city: z.string().trim().max(80).catch(''),
       sort: sort.catch('scheduled_asc'),
       page: z.coerce.number().int().min(1).catch(1),
+      selected: z.string().trim().max(80).catch(''),
     })
     .safeParse(value)
   return result.success ? result.data : defaultTravelSearch

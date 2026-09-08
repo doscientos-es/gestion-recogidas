@@ -12,6 +12,7 @@ describe('parseTravelSearch', () => {
         city: ' Mataró ',
         sort: 'amount_desc',
         page: '2',
+        selected: ' ord-1 ',
       }),
     ).toEqual({
       q: 'Mataró',
@@ -20,6 +21,7 @@ describe('parseTravelSearch', () => {
       city: 'Mataró',
       sort: 'amount_desc',
       page: 2,
+      selected: 'ord-1',
     }))
   it('uses safe defaults', () =>
     expect(parseTravelSearch({ q: [], status: 'unknown' })).toEqual(defaultTravelSearch))
@@ -27,4 +29,6 @@ describe('parseTravelSearch', () => {
     expect(parseTravelSearch({ status: 'in_progress' }).status).toBe('in_progress'))
   it('clamps invalid page values to the first page', () =>
     expect(parseTravelSearch({ page: 0 }).page).toBe(1))
+  it('ignores an invalid selected trip', () =>
+    expect(parseTravelSearch({ selected: 42 }).selected).toBe(''))
 })

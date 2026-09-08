@@ -2,12 +2,9 @@ import {
   Button,
   Card,
   CardContent,
-  Input,
-  PageHeader,
-  PageHeaderActions,
-  PageHeaderDescription,
-  PageHeaderHeading,
-  PageHeaderTitle,
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
 } from '@doscientos/ui'
 import { ChevronLeft, ChevronRight, Plus, RefreshCw, Search, X } from 'lucide-react'
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
@@ -18,8 +15,15 @@ import { queryTrips, tripCities } from '../application/trip-queries'
 import type { PickupOrder } from '../application/types'
 import { formatScheduledAt } from '../application/workflow'
 import { OrderDetailCard } from './order-detail-card'
-import { RouteSummary } from './route-summary'
 import { StatusBadge } from './status-badge'
+
+const statusTabs = [
+  { value: 'all', label: 'Todos' },
+  { value: 'received', label: 'Por procesar' },
+  { value: 'pending_assignment', label: 'Por asignar' },
+  { value: 'scheduled', label: 'Confirmados' },
+  { value: 'completed', label: 'Completados' },
+] as const satisfies readonly { value: TravelSearch['status']; label: string }[]
 
 export function TripsPage({
   search,
@@ -29,7 +33,6 @@ export function TripsPage({
   onSearchChange: (update: Partial<TravelSearch>) => void
 }) {
   const { state, refresh, loading } = useOperations()
-  const [selectedId, setSelectedId] = useState(state.orders[0]?.id)
   const [showForm, setShowForm] = useState(false)
   // El texto escrito se mantiene en un estado local y viaja a la URL con retardo:
   // así no se dispara una consulta por pulsación de tecla.
@@ -42,146 +45,169 @@ export function TripsPage({
   }, [queryDraft, search.q, onSearchChange])
   const cities = useMemo(() => tripCities(state.orders), [state.orders])
   const result = useMemo(() => queryTrips(state.orders, search), [state.orders, search])
+  // Los contadores por estado sustituyen a la franja de métricas: misma información, sin ocupar espacio.
+  const counts = useMemo(
+    () =>
+      statusTabs.map((tab) => ({
+        ...tab,
+        count:
+          tab.value === 'all'
+            ? state.orders.length
+            : state.orders.filter((order) => order.status === tab.value).length,
+      })),
+    [state.orders],
+  )
   const orders = result.rows
-  const selected = orders.find((order) => order.id === selectedId) ?? orders[0]
+  const selected = orders.find((order) => order.id === search.selected) ?? orders[0]
   return (
-    <div className="space-y-6">
-      <PageHeader>
-        <PageHeaderHeading>
-          <PageHeaderTitle>Viajes recibidos</PageHeaderTitle>
-          <PageHeaderDescription>
-            Órdenes importadas por correo y altas manuales.
-          </PageHeaderDescription>
-        </PageHeaderHeading>
-        <PageHeaderActions>
-          <Button variant="outline" onPress={() => void refresh()} isDisabled={loading}>
-            <RefreshCw aria-hidden />
-            Actualizar
-          </Button>
-          <Button onPress={() => setShowForm((value) => !value)}>
-            {showForm ? <X aria-hidden /> : <Plus aria-hidden />}
-            {showForm ? 'Cerrar formulario' : 'Nuevo viaje'}
-          </Button>
-        </PageHeaderActions>
-      </PageHeader>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button variant="ghost" onPress={() => void refresh()} isDisabled={loading}>
+          <RefreshCw aria-hidden />
+          Actualizar
+        </Button>
+        <Button onPress={() => setShowForm((value) => !value)}>
+          {showForm ? <X aria-hidden /> : <Plus aria-hidden />}
+          {showForm ? 'Cerrar' : 'Nuevo viaje'}
+        </Button>
+      </div>
       {showForm ? (
         <ManualOrderForm
           onCreated={(orderId) => {
-            setSelectedId(orderId)
-            onSearchChange({ ...defaultTravelSearch })
+            onSearchChange({ ...defaultTravelSearch, selected: orderId })
             setShowForm(false)
           }}
         />
       ) : null}
-      <div className="filter-row">
-        <div className="relative flex-1">
-          <Search
-            aria-hidden
-            className="text-muted-foreground pointer-events-none absolute top-2.5 left-3 size-4"
-          />
-          <Input
-            className="pl-9"
-            value={queryDraft}
-            onChange={(event: ChangeEvent<HTMLInputElement>) => setQueryDraft(event.target.value)}
-            placeholder="Buscar por referencia, cliente o ciudad"
-          />
-        </div>
-        <select
-          className="field-control sm:w-48"
-          value={search.status}
-          onChange={(event) =>
-            onSearchChange({ status: event.target.value as TravelSearch['status'], page: 1 })
-          }
-        >
-          <option value="all">Todos los viajes</option>
-          <option value="received">Correo recibido</option>
-          <option value="pending_assignment">Por asignar</option>
-          <option value="scheduled">Confirmados</option>
-          <option value="in_progress">En curso</option>
-          <option value="completed">Completados</option>
-          <option value="invoiced">Facturados</option>
-        </select>
-        <select
-          className="field-control sm:w-44"
-          value={search.source}
-          onChange={(event) =>
-            onSearchChange({ source: event.target.value as TravelSearch['source'], page: 1 })
-          }
-        >
-          <option value="all">Toda procedencia</option>
-          <option value="email">Importados por correo</option>
-          <option value="manual">Alta manual</option>
-        </select>
-        {cities.length > 1 ? (
-          <select
-            className="field-control sm:w-44"
-            value={search.city}
-            onChange={(event) => onSearchChange({ city: event.target.value, page: 1 })}
-          >
-            <option value="">Todas las recogidas</option>
-            {cities.map((city) => (
-              <option key={city} value={city}>
-                Recogida en {city}
-              </option>
+      <div className="inbox-grid">
+        <section className="inbox-list" aria-label="Listado de viajes">
+          <div className="inbox-toolbar">
+            <InputGroup>
+              <InputGroupAddon align="inline-start">
+                <Search aria-hidden className="size-4" />
+              </InputGroupAddon>
+              <InputGroupInput
+                aria-label="Buscar viajes"
+                value={queryDraft}
+                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                  setQueryDraft(event.target.value)
+                }
+                placeholder="Buscar por referencia, cliente o ciudad"
+              />
+            </InputGroup>
+            <div className="inbox-tabs" role="tablist" aria-label="Estado del viaje">
+              {counts.map((tab) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={search.status === tab.value}
+                  className={`inbox-tab ${search.status === tab.value ? 'inbox-tab-active' : ''}`}
+                  onClick={() => onSearchChange({ status: tab.value, page: 1, selected: '' })}
+                >
+                  {tab.label}
+                  <span className="inbox-tab-count">{tab.count}</span>
+                </button>
+              ))}
+            </div>
+            <div className="inbox-filters">
+              <select
+                aria-label="Procedencia"
+                className="field-control"
+                value={search.source}
+                onChange={(event) =>
+                  onSearchChange({
+                    source: event.target.value as TravelSearch['source'],
+                    page: 1,
+                    selected: '',
+                  })
+                }
+              >
+                <option value="all">Toda procedencia</option>
+                <option value="email">Importados por correo</option>
+                <option value="manual">Alta manual</option>
+              </select>
+              {cities.length > 1 ? (
+                <select
+                  aria-label="Ciudad de recogida"
+                  className="field-control"
+                  value={search.city}
+                  onChange={(event) =>
+                    onSearchChange({ city: event.target.value, page: 1, selected: '' })
+                  }
+                >
+                  <option value="">Todas las recogidas</option>
+                  {cities.map((city) => (
+                    <option key={city} value={city}>
+                      Recogida en {city}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+              <select
+                aria-label="Orden"
+                className="field-control"
+                value={search.sort}
+                onChange={(event) =>
+                  onSearchChange({ sort: event.target.value as TravelSearch['sort'] })
+                }
+              >
+                <option value="scheduled_asc">Recogida próxima</option>
+                <option value="scheduled_desc">Recogida tardía</option>
+                <option value="amount_desc">Importe mayor</option>
+                <option value="amount_asc">Importe menor</option>
+                <option value="reference_asc">Referencia</option>
+              </select>
+            </div>
+          </div>
+          <ul className="inbox-rows">
+            {orders.map((order) => (
+              <li key={order.id}>
+                <button
+                  type="button"
+                  onClick={() => onSearchChange({ selected: order.id })}
+                  aria-current={selected?.id === order.id}
+                  className={`inbox-row ${selected?.id === order.id ? 'inbox-row-active' : ''}`}
+                >
+                  <span className="inbox-row-top">
+                    <strong>{order.customer}</strong>
+                    <small>{formatScheduledAt(order.scheduledAt)}</small>
+                  </span>
+                  <span className="inbox-row-route">
+                    {order.pickupCity} → {order.deliveryCity}
+                  </span>
+                  <span className="inbox-row-bottom">
+                    <small>{order.reference}</small>
+                    <StatusBadge status={order.status} />
+                  </span>
+                </button>
+              </li>
             ))}
-          </select>
-        ) : null}
-        <select
-          className="field-control sm:w-52"
-          value={search.sort}
-          onChange={(event) => onSearchChange({ sort: event.target.value as TravelSearch['sort'] })}
-        >
-          <option value="scheduled_asc">Recogida próxima</option>
-          <option value="scheduled_desc">Recogida tardía</option>
-          <option value="amount_desc">Importe mayor</option>
-          <option value="amount_asc">Importe menor</option>
-          <option value="reference_asc">Referencia</option>
-        </select>
-      </div>
-      <div className="grid gap-5 lg:grid-cols-[0.9fr_1.3fr]">
-        <div className="space-y-2">
-          {orders.map((order) => (
-            <button
-              type="button"
-              key={order.id}
-              onClick={() => setSelectedId(order.id)}
-              className={`order-row ${selected?.id === order.id ? 'order-row-active' : ''}`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="text-left">
-                  <p className="font-semibold">{order.reference}</p>
-                  <p className="text-muted-foreground text-sm">{order.customer}</p>
-                </div>
-                <StatusBadge status={order.status} />
-              </div>
-              <div className="mt-4">
-                <RouteSummary order={order} compact />
-              </div>
-              <p className="text-muted-foreground mt-3 text-left text-xs">
-                {formatScheduledAt(order.scheduledAt)}
-              </p>
-            </button>
-          ))}
+          </ul>
           {result.total === 0 ? (
             <p className="text-muted-foreground py-8 text-center text-sm">
               No hay viajes con estos filtros.
             </p>
           ) : null}
-        </div>
-        {selected ? (
-          <OrderDetailCard key={selected.id} order={selected} />
-        ) : (
-          <Card>
-            <CardContent className="p-8 text-center">No hay viajes con estos filtros.</CardContent>
-          </Card>
-        )}
+          <Pagination
+            page={result.page}
+            pageCount={result.pageCount}
+            total={result.total}
+            onPageChange={(page) => onSearchChange({ page, selected: '' })}
+          />
+        </section>
+        <section className="inbox-detail" aria-label="Detalle del viaje">
+          {selected ? (
+            <OrderDetailCard key={selected.id} order={selected} />
+          ) : (
+            <Card>
+              <CardContent className="text-muted-foreground p-10 text-center text-sm">
+                Selecciona un viaje para ver su detalle.
+              </CardContent>
+            </Card>
+          )}
+        </section>
       </div>
-      <Pagination
-        page={result.page}
-        pageCount={result.pageCount}
-        total={result.total}
-        onPageChange={(page) => onSearchChange({ page })}
-      />
     </div>
   )
 }
