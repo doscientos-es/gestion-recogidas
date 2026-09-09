@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { defaultTravelSearch, type TravelSearch } from '../application/travel-search'
+import type { PickupOrder } from '../application/types'
 import { TripsPage } from './trips-page'
 
 // jsdom no implementa scrollIntoView; el efecto de la página lo llama al enfocar una fila.
@@ -13,8 +14,8 @@ beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn()
 })
 
-const { orders } = vi.hoisted(() => {
-  function order(overrides: Record<string, unknown>) {
+const { markRead, orders } = vi.hoisted(() => {
+  function order(overrides: Partial<PickupOrder>): PickupOrder {
     return {
       id: 'x',
       reference: 'REC-1',
@@ -38,6 +39,7 @@ const { orders } = vi.hoisted(() => {
     }
   }
   return {
+    markRead: vi.fn(),
     orders: [
       order({ id: 'ord-1', reference: 'REC-1', customer: 'Cliente Uno' }),
       order({
@@ -62,6 +64,10 @@ const baseOrderCount = orders.length
 // registra: sin esto cada test apila su render sobre el DOM de los anteriores.
 afterEach(() => {
   orders.splice(baseOrderCount)
+  orders.forEach((order) => {
+    delete order.isRead
+  })
+  markRead.mockClear()
   cleanup()
   vi.unstubAllGlobals()
 })
@@ -70,6 +76,7 @@ vi.mock('../application/operations-context', () => ({
   useOperations: () => ({
     state: { orders, drivers: [], activity: [] },
     assign: vi.fn(async () => {}),
+    markRead,
     updateOrder: vi.fn(),
   }),
 }))
@@ -111,20 +118,49 @@ describe('TripsPage - navegación por teclado', () => {
     expect(screen.getAllByLabelText('2 pasajeros')).toHaveLength(3)
   })
 
+  it('filtra los servicios nuevos y muestra su contador', async () => {
+    const firstOrder = orders.at(0)
+    if (!firstOrder) throw new Error('Se necesita un viaje para probar los nuevos.')
+    firstOrder.isRead = true
+    const user = userEvent.setup()
+    render(<Harness />)
+
+    await user.click(screen.getByRole('tab', { name: /Nuevos\s*2/ }))
+
+    expect(screen.queryByRole('button', { name: /Cliente Uno/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Cliente Dos/ })).toBeInTheDocument()
+  })
+
+  it('marca como leído el viaje compartido al abrirlo', async () => {
+    const firstOrder = orders.at(0)
+    if (!firstOrder) throw new Error('Se necesita un viaje para probar la apertura.')
+    const user = userEvent.setup()
+    firstOrder.isRead = false
+    render(<Harness />)
+
+    await user.click(screen.getByRole('button', { name: /Cliente Uno/ }))
+
+    await waitFor(() => expect(markRead).toHaveBeenCalledWith('ord-1'))
+  })
+
   it('muestra hasta cuatro accesos directos en la paginación compacta', () => {
+    const firstOrder = orders.at(0)
+    if (!firstOrder)
+      throw new Error('Se necesita un viaje de referencia para probar la paginación.')
     orders.push(
       ...Array.from({ length: 40 }, (_, index) => ({
-        ...orders[0]!,
+        ...firstOrder,
         customer: `Cliente de paginación ${index}`,
         id: `pagination-${index}`,
       })),
     )
     const { container } = render(<Harness />)
     const compactControls = container.querySelector<HTMLDivElement>('.pagination-controls-compact')
+    if (!compactControls) throw new Error('No se han renderizado los controles compactos.')
 
     expect(compactControls).toBeInTheDocument()
     expect(
-      within(compactControls!)
+      within(compactControls)
         .getAllByRole('button')
         .map((button) => button.textContent),
     ).toEqual(['', '1', '2', '3', '4', ''])

@@ -18,7 +18,9 @@ const collator = new Intl.Collator('es')
 export function queryTrips(orders: PickupOrder[], search: TravelSearch): TripQueryResult {
   const query = search.q.toLocaleLowerCase('es')
   const filtered = orders.filter((order) => {
-    if (search.status !== 'all' && order.status !== search.status) return false
+    if (search.status === 'new' && order.isRead) return false
+    if (search.status !== 'all' && search.status !== 'new' && order.status !== search.status)
+      return false
     if (search.source !== 'all' && order.source !== search.source) return false
     if (search.city && order.pickupCity !== search.city) return false
     if (

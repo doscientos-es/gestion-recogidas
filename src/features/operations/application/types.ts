@@ -53,6 +53,8 @@ export interface PickupOrder {
   calendarState: IntegrationState
   emailState: IntegrationState
   receivedAt: string
+  /** Leído por cualquier persona del equipo en la bandeja compartida. */
+  isRead?: boolean
 }
 
 export interface ActivityItem {

@@ -36,6 +36,7 @@ const seedState: OperationsState = {
       calendarState: 'pending',
       emailState: 'pending',
       receivedAt: '2026-09-08T09:12:00+02:00',
+      isRead: false,
     },
     {
       id: 'ord-260909-179',
@@ -60,6 +61,7 @@ const seedState: OperationsState = {
       calendarState: 'sent',
       emailState: 'sent',
       receivedAt: '2026-09-07T16:40:00+02:00',
+      isRead: true,
     },
     {
       id: 'ord-260908-172',
@@ -81,6 +83,7 @@ const seedState: OperationsState = {
       calendarState: 'sent',
       emailState: 'sent',
       receivedAt: '2026-09-06T10:05:00+02:00',
+      isRead: true,
     },
     ...createBulkOrders(),
   ],
@@ -198,6 +201,7 @@ function createBulkOrders(): PickupOrder[] {
       calendarState: assigned ? 'sent' : index % 2 === 0 ? 'prepared' : 'pending',
       emailState: assigned ? 'sent' : index % 3 === 0 ? 'prepared' : 'pending',
       receivedAt: `2026-09-${String(1 + (index % 8)).padStart(2, '0')}T${String(7 + (index % 9)).padStart(2, '0')}:15:00+02:00`,
+      isRead: true,
     }
   })
 }

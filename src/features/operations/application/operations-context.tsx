@@ -25,6 +25,7 @@ interface OperationsContextValue {
   assign: (orderId: string, driverId: string) => Promise<void>
   addManual: (order: PickupOrder) => void
   updateOrder: (orderId: string, patch: Partial<PickupOrder>) => void
+  markRead: (orderId: string) => void
   addDriver: (driver: Driver) => void
   updateDriver: (driverId: string, patch: Partial<Driver>) => void
   deleteDriver: (driverId: string) => void
@@ -107,6 +108,17 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
             order.id === orderId ? { ...order, ...patch } : order,
           ),
         })),
+      markRead: (orderId) =>
+        commit((current) => {
+          const order = current.orders.find((item) => item.id === orderId)
+          if (!order || order.isRead) return current
+          return {
+            ...current,
+            orders: current.orders.map((item) =>
+              item.id === orderId ? { ...item, isRead: true } : item,
+            ),
+          }
+        }),
       addDriver: (driver) => commit((current) => addDriver(current, driver)),
       updateDriver: (driverId, patch) =>
         commit((current) => updateDriver(current, driverId, patch)),

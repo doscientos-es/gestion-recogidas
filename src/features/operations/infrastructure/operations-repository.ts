@@ -59,6 +59,7 @@ function normalizeOperationsState(state: OperationsState): OperationsState {
         calendarState,
         emailState,
         receivedAt,
+        isRead,
       } = item as PickupOrder & { cargo?: string; status: string; weightKg?: number }
       const legacyOrder = item as PickupOrder & {
         cargo?: string
@@ -113,6 +114,7 @@ function normalizeOperationsState(state: OperationsState): OperationsState {
         calendarState,
         emailState,
         receivedAt,
+        isRead: isRead === true,
         status:
           rawStatus === 'received' || status === 'pending_assignment'
             ? 'pending_assignment'
@@ -145,7 +147,7 @@ export function mergeReceivedOrders(
   if (newOrders.length === 0) return state
   return {
     ...state,
-    orders: [...newOrders, ...state.orders],
+    orders: [...newOrders.map((order) => ({ ...order, isRead: false })), ...state.orders],
     activity: [
       ...newOrders.map((order) => ({
         id: `email-${order.id}`,

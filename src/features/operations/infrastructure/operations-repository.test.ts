@@ -34,6 +34,7 @@ describe('mergeReceivedOrders', () => {
     const result = mergeReceivedOrders(state, [order('new')])
 
     expect(result.orders.map((item) => item.id)).toEqual(['new', 'existing'])
+    expect(result.orders[0]).toMatchObject({ isRead: false })
     expect(result.activity[0]).toMatchObject({
       title: 'Correo recibido y analizado',
       detail: 'MONTAX-new · 2 pasajeros',

@@ -7,7 +7,7 @@ import {
   IconButton,
 } from '@doscientos/ui'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
-import { Plus, RefreshCw, Users, X } from 'lucide-react'
+import { CalendarDays, Car, FileText, Plus, RefreshCw, Users, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { useOperations } from '@/features/operations/application/operations-context'
@@ -74,6 +74,58 @@ export function AppFrame({ children }: { children: ReactNode }) {
               {composing ? <X aria-hidden /> : <Plus aria-hidden />}
               {composing ? 'Cerrar' : 'Nuevo viaje'}
             </Button>
+            <IconButton
+              className="navbar-compact-action"
+              label="Calendario"
+              variant="outline"
+              onPress={() => void navigate({ to: '/calendario' })}
+            >
+              <CalendarDays aria-hidden />
+            </IconButton>
+            <Button
+              className="navbar-wide-action"
+              variant="outline"
+              onPress={() => void navigate({ to: '/calendario' })}
+            >
+              <CalendarDays aria-hidden />
+              Calendario
+            </Button>
+            <a
+              href="https://kabiku.es"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="navbar-compact-action icon-link"
+              aria-label="Abrir Facturación en Kabiku"
+            >
+              <FileText aria-hidden />
+            </a>
+            <a
+              href="https://kabiku.es"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="navbar-wide-action action-link"
+            >
+              <FileText aria-hidden />
+              Facturación
+            </a>
+            <a
+              href="https://movildata.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="navbar-compact-action icon-link"
+              aria-label="Abrir Vehículos en Movildata"
+            >
+              <Car aria-hidden />
+            </a>
+            <a
+              href="https://movildata.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="navbar-wide-action action-link"
+            >
+              <Car aria-hidden />
+              Vehículos
+            </a>
             <IconButton
               className="navbar-compact-action"
               label="Gestionar conductores"

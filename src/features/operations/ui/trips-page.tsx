@@ -38,6 +38,7 @@ import { OrderDetailCard } from './order-detail-card'
 import { StatusBadge } from './status-badge'
 
 const statusTabs = [
+  { value: 'new', label: 'Nuevos' },
   { value: 'all', label: 'Todos' },
   { value: 'pending_assignment', label: 'Por asignar' },
   { value: 'assigned', label: 'Asignados' },
@@ -106,7 +107,7 @@ export function TripsPage({
   search: TravelSearch
   onSearchChange: (update: Partial<TravelSearch>) => void
 }) {
-  const { state } = useOperations()
+  const { markRead, state } = useOperations()
   const isDesktopLayout = useDesktopLayout()
   // El texto escrito se mantiene en un estado local y viaja a la URL con retardo:
   // así no se dispara una consulta por pulsación de tecla.
@@ -127,7 +128,9 @@ export function TripsPage({
         count:
           tab.value === 'all'
             ? state.orders.length
-            : state.orders.filter((order) => order.status === tab.value).length,
+            : tab.value === 'new'
+              ? state.orders.filter((order) => !order.isRead).length
+              : state.orders.filter((order) => order.status === tab.value).length,
       })),
     [state.orders],
   )
@@ -144,6 +147,9 @@ export function TripsPage({
     if (!search.selected) return
     listRef.current?.querySelector('[aria-current="true"]')?.scrollIntoView({ block: 'nearest' })
   }, [search.selected])
+  useEffect(() => {
+    if (selected && !selected.isRead) markRead(selected.id)
+  }, [markRead, selected])
   function handleRowKeys(event: KeyboardEvent<HTMLButtonElement>) {
     if (event.key === 'Escape') {
       if (!search.selected) return

@@ -68,6 +68,18 @@ describe('trip queries', () => {
     expect(result.total).toBe(1)
   })
 
+  it('shows only unread services in the new category', () => {
+    const [readOrder, unreadOrder, unmarkedOrder] = orders
+    if (!readOrder || !unreadOrder || !unmarkedOrder)
+      throw new Error('Se necesitan tres viajes para probar la categoría de nuevos.')
+    const result = queryTrips(
+      [{ ...readOrder, isRead: true }, { ...unreadOrder, isRead: false }, unmarkedOrder],
+      { ...defaultTravelSearch, status: 'new' },
+    )
+
+    expect(result.rows.map((order) => order.id)).toEqual(['2', '3'])
+  })
+
   it('sorts by schedule, amount and reference', () => {
     expect(queryTrips(orders, defaultTravelSearch).rows.map((order) => order.id)).toEqual([
       '2',
