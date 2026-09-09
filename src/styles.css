@@ -250,6 +250,10 @@ select {
   overflow-y: auto;
   padding-right: 0.25rem;
 }
+.inbox-list {
+  container-name: trip-list;
+  container-type: inline-size;
+}
 .inbox-row {
   display: grid;
   width: 100%;
@@ -357,6 +361,9 @@ select {
   align-items: center;
   gap: 0.25rem;
 }
+.pagination-controls-full {
+  display: none;
+}
 .pagination-button {
   display: grid;
   min-width: 2rem;
@@ -385,24 +392,24 @@ select {
   color: var(--primary-foreground);
 }
 .pagination-ellipsis {
-  display: none;
   padding: 0 0.3rem;
   color: var(--muted-foreground);
   font-size: 0.8rem;
 }
-.pagination-page-shortcut:not(.pagination-active) {
-  display: none;
-}
-@media (min-width: 640px) {
+@container trip-list (min-width: 40rem) {
   .pagination-summary-compact {
     display: none;
   }
   .pagination-summary-full,
-  .pagination-ellipsis {
+  .pagination-ellipsis,
+  .pagination-controls-full {
     display: inline;
   }
-  .pagination-page-shortcut:not(.pagination-active) {
-    display: grid;
+  .pagination-controls-full {
+    display: flex;
+  }
+  .pagination-controls-compact {
+    display: none;
   }
   .pagination-controls {
     gap: 0.3rem;

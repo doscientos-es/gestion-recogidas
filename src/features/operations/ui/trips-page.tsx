@@ -412,6 +412,11 @@ function Pagination({
       (item, index, list) => !(item === 'ellipsis' && list[index - 1] === 'ellipsis'),
     )
   }, [page, pageCount])
+  const compactPages = useMemo(() => {
+    const compactSize = 4
+    const start = Math.max(1, Math.min(page - 1, pageCount - compactSize + 1))
+    return Array.from({ length: Math.min(compactSize, pageCount) }, (_, index) => start + index)
+  }, [page, pageCount])
   return (
     <nav className="pagination-bar" aria-label="Paginación de viajes">
       <p className="text-muted-foreground text-sm">
@@ -422,7 +427,39 @@ function Pagination({
           {total} {total === 1 ? 'viaje' : 'viajes'} · página {page} de {pageCount}
         </span>
       </p>
-      <div className="pagination-controls">
+      <div className="pagination-controls pagination-controls-compact">
+        <button
+          type="button"
+          className="pagination-button"
+          onClick={() => onPageChange(page - 1)}
+          disabled={page <= 1}
+          aria-label="Página anterior"
+        >
+          <ChevronLeft aria-hidden className="size-4" />
+        </button>
+        {compactPages.map((item) => (
+          <button
+            type="button"
+            key={item}
+            className={`pagination-button ${item === page ? 'pagination-active' : ''}`}
+            onClick={() => onPageChange(item)}
+            disabled={item === page}
+            aria-current={item === page ? 'page' : undefined}
+          >
+            {item}
+          </button>
+        ))}
+        <button
+          type="button"
+          className="pagination-button"
+          onClick={() => onPageChange(page + 1)}
+          disabled={page >= pageCount}
+          aria-label="Página siguiente"
+        >
+          <ChevronRight aria-hidden className="size-4" />
+        </button>
+      </div>
+      <div className="pagination-controls pagination-controls-full">
         <button
           type="button"
           className="pagination-button"
@@ -441,7 +478,7 @@ function Pagination({
             <button
               type="button"
               key={item}
-              className={`pagination-button pagination-page-shortcut ${item === page ? 'pagination-active' : ''}`}
+              className={`pagination-button ${item === page ? 'pagination-active' : ''}`}
               onClick={() => onPageChange(item)}
               disabled={item === page}
               aria-current={item === page ? 'page' : undefined}

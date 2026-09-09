@@ -8,12 +8,6 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { defaultTravelSearch, type TravelSearch } from '../application/travel-search'
 import { TripsPage } from './trips-page'
 
-// Vitest no expone `globals`, así que el auto-cleanup de testing-library nunca se
-// registra: sin esto cada test apila su render sobre el DOM de los anteriores.
-afterEach(() => {
-  cleanup()
-  vi.unstubAllGlobals()
-})
 // jsdom no implementa scrollIntoView; el efecto de la página lo llama al enfocar una fila.
 beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn()
@@ -62,6 +56,16 @@ const { orders } = vi.hoisted(() => {
   }
 })
 
+const baseOrderCount = orders.length
+
+// Vitest no expone `globals`, así que el auto-cleanup de testing-library nunca se
+// registra: sin esto cada test apila su render sobre el DOM de los anteriores.
+afterEach(() => {
+  orders.splice(baseOrderCount)
+  cleanup()
+  vi.unstubAllGlobals()
+})
+
 vi.mock('../application/operations-context', () => ({
   useOperations: () => ({
     state: { orders, drivers: [], activity: [] },
@@ -105,6 +109,25 @@ describe('TripsPage - navegación por teclado', () => {
 
     expect(screen.queryByText('Terrassa → Barcelona')).not.toBeInTheDocument()
     expect(screen.getAllByLabelText('2 pasajeros')).toHaveLength(3)
+  })
+
+  it('muestra hasta cuatro accesos directos en la paginación compacta', () => {
+    orders.push(
+      ...Array.from({ length: 40 }, (_, index) => ({
+        ...orders[0]!,
+        customer: `Cliente de paginación ${index}`,
+        id: `pagination-${index}`,
+      })),
+    )
+    const { container } = render(<Harness />)
+    const compactControls = container.querySelector<HTMLDivElement>('.pagination-controls-compact')
+
+    expect(compactControls).toBeInTheDocument()
+    expect(
+      within(compactControls!)
+        .getAllByRole('button')
+        .map((button) => button.textContent),
+    ).toEqual(['', '1', '2', '3', '4', ''])
   })
 
   it('abre el detalle seleccionado en un drawer', async () => {
