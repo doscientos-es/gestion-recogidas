@@ -3,7 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 
-import { parseMontaxEmail } from '../src/features/operations/infrastructure/montax-parser'
+import { parseMontaxEmail } from '../src/features/operations/infrastructure/montax-parser.js'
 
 const MAX_BODY_BYTES = 1_000_000
 
