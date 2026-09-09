@@ -108,6 +108,45 @@ function extractCount(text: string, labels: string[]): number | undefined {
   return Number.isFinite(count) && count > 0 ? count : undefined
 }
 
+const madridOffsetFormatter = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'Europe/Madrid',
+  timeZoneName: 'longOffset',
+})
+
+/** Montax facilita la hora local peninsular sin indicar la zona en el email. */
+function madridDateTime(date: string, time: string): string | undefined {
+  const dateParts = date.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  const timeParts = time.match(/^(\d{1,2}):(\d{2})$/)
+  if (!dateParts || !timeParts) return undefined
+  const [, day, month, year] = dateParts
+  const [, hour, minute] = timeParts
+  const dayNumber = Number(day)
+  const monthNumber = Number(month)
+  const yearNumber = Number(year)
+  const hourNumber = Number(hour)
+  const minuteNumber = Number(minute)
+  const values = [dayNumber, monthNumber, yearNumber, hourNumber, minuteNumber]
+  if (values.some((value) => !Number.isInteger(value))) return undefined
+  const intendedUtc = new Date(
+    Date.UTC(yearNumber, monthNumber - 1, dayNumber, hourNumber, minuteNumber),
+  )
+  if (
+    intendedUtc.getUTCFullYear() !== yearNumber ||
+    intendedUtc.getUTCMonth() !== monthNumber - 1 ||
+    intendedUtc.getUTCDate() !== dayNumber ||
+    intendedUtc.getUTCHours() !== hourNumber ||
+    intendedUtc.getUTCMinutes() !== minuteNumber
+  )
+    return undefined
+  const offset = madridOffsetFormatter
+    .formatToParts(intendedUtc)
+    .find((part) => part.type === 'timeZoneName')
+    ?.value.match(/^GMT([+-])(\d{2}):(\d{2})$/)
+  if (!offset) return undefined
+  const offsetMinutes = (Number(offset[2]) * 60 + Number(offset[3])) * (offset[1] === '+' ? 1 : -1)
+  return new Date(intendedUtc.getTime() - offsetMinutes * 60_000).toISOString()
+}
+
 export function parseMontaxEmail(input: {
   text?: string
   html?: string
@@ -145,16 +184,8 @@ export function parseMontaxEmail(input: {
   const waitingConditions = section(raw, 'REFERENTE A LAS HORAS DE ESPERA', [])
 
   let scheduledAt = new Date().toISOString()
-  if (date && time) {
-    const [day, month, year] = date.split('/')
-    if (day && month && year) {
-      const isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${time.padStart(5, '0')}:00`
-      const parsed = new Date(isoDate)
-      if (!Number.isNaN(parsed.getTime())) {
-        scheduledAt = parsed.toISOString()
-      }
-    }
-  }
+  const parsedScheduledAt = madridDateTime(date, time)
+  if (parsedScheduledAt) scheduledAt = parsedScheduledAt
 
   const amountCents = extractAmount(raw, 'IMPORTE TOTAL DEL SERVICIO') ?? 0
   const waitHours = value(raw, 'HORAS DE ESPERA')
