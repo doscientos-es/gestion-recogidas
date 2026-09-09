@@ -34,7 +34,7 @@ function initialsFor(name: string): string {
 }
 
 export function DriversPage() {
-  const { state, mode, saving, addDriver, updateDriver, deleteDriver } = useOperations()
+  const { state, saving, addDriver, updateDriver, deleteDriver } = useOperations()
   const [creating, setCreating] = useState(false)
   const [editingId, setEditingId] = useState<string>()
   const [searchDraft, setSearchDraft] = useState('')
@@ -47,11 +47,6 @@ export function DriversPage() {
   const remoteKey = `${search}\u0000${page}\u0000${driversRevision}`
 
   useEffect(() => {
-    if (mode !== 'supabase') {
-      setRemotePage(undefined)
-      setRemoteError(undefined)
-      return
-    }
     if (saving) return
     let active = true
     setRemoteError(undefined)
@@ -70,10 +65,9 @@ export function DriversPage() {
     return () => {
       active = false
     }
-  }, [mode, page, remoteKey, saving, search])
+  }, [page, remoteKey, saving, search])
 
-  const driversPage =
-    mode === 'supabase' && remotePage?.key === remoteKey ? remotePage.value : localPage
+  const driversPage = remotePage?.key === remoteKey ? remotePage.value : localPage
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

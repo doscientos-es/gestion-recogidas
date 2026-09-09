@@ -21,7 +21,6 @@ vi.mock('../../../shared/lib/supabase/client', () => ({
 describe('AuthenticationGate', () => {
   it('muestra el contenido tras autenticar con email y contraseña', async () => {
     const user = userEvent.setup()
-    vi.stubEnv('VITE_DATA_MODE', 'supabase')
     getSession.mockResolvedValue({ data: { session: null }, error: null })
     onAuthStateChange.mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } })
     signInWithPassword.mockResolvedValue({

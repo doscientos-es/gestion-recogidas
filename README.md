@@ -1,6 +1,6 @@
 # Gestión de recogidas
 
-Demo comercial del flujo completo de transporte: entrada de una solicitud con adjunto,
+Flujo completo de transporte: entrada de una solicitud con adjunto,
 creación de la orden, planificación, asignación de conductor, aviso por email,
 WhatsApp, calendario, cierre del viaje y preparación de la factura para Kabiku.
 
@@ -12,15 +12,14 @@ WhatsApp, calendario, cierre del viaje y preparación de la factura para Kabiku.
 4. Abrir el WhatsApp precompletado y descargar la invitación `.ics`.
 5. Marcar el viaje como completado y enviarlo a Kabiku desde **Facturación**.
 
-Los datos son sintéticos pero concretos. El modo inicial persiste interacciones en
-`localStorage`, por lo que la demo funciona sin servicios externos ni credenciales.
+Los datos operativos y los correos entrantes se comparten mediante Supabase.
 
 ## Arquitectura
 
 | Área                                     | Propósito                                                         |
 | ---------------------------------------- | ----------------------------------------------------------------- |
 | `src/features/operations/application`    | Tipos, estado y reglas del workflow.                              |
-| `src/features/operations/infrastructure` | Persistencia local/Supabase y notificaciones.                     |
+| `src/features/operations/infrastructure` | Persistencia en Supabase y notificaciones.                        |
 | `src/features/operations/ui`             | Viajes, calendario y gestión de conductores.                      |
 | `api/inbound-email.ts`                   | Función Vercel que verifica webhooks de Resend y persiste emails. |
 | `src/routes`                             | Rutas tipadas de TanStack Router.                                 |
@@ -30,7 +29,7 @@ visuales a `@doscientos/ui`. Las rutas no conocen Supabase ni Resend.
 
 ## Variables de entorno
 
-Copiar `.env.example` a `.env.local`. Para la presentación no hace falta modificar nada.
+Copiar `.env.example` a `.env.local` y configurar las variables públicas de Supabase.
 
 - Para enviar un correo real: configurar en Vercel `RESEND_API_KEY`,
   `RESEND_FROM_EMAIL` y `DEMO_NOTIFICATION_RECIPIENT`, y activar
@@ -41,9 +40,8 @@ Copiar `.env.example` a `.env.local`. Para la presentación no hace falta modifi
 - Para correo entrante: configurar `RESEND_API_KEY`, `INBOUND_WEBHOOK_SECRET`,
   `SUPABASE_URL` y `SUPABASE_SECRET_KEY` sólo en Vercel. El endpoint
   `/api/inbound-email` valida la firma de Resend antes de leer o persistir el correo.
-- Para persistencia remota: aplicar la migración incluida, habilitar los inicios de
-  sesión anónimos y usar `VITE_DATA_MODE=supabase`, URL y publishable key. Nunca
-  exponer una service role.
+- Para persistencia: aplicar las migraciones incluidas y usar la URL y publishable key
+  de Supabase. Nunca exponer una service role.
 
 ## Desarrollo y despliegue
 

@@ -140,6 +140,7 @@ export function TripsPage({
     : undefined
   const listRef = useRef<HTMLUListElement>(null)
   const tabsRef = useRef<HTMLDivElement>(null)
+  const previousSelectedRef = useRef<PickupOrder | undefined>(undefined)
   // La fila enfocable con Tab es la seleccionada; si no hay ninguna, la primera de la página.
   const focusableRowId = selected?.id ?? orders[0]?.id
   // Al llegar una selección desde la URL (atrás/adelante) la fila puede quedar fuera de vista.
@@ -147,14 +148,24 @@ export function TripsPage({
     if (!search.selected) return
     listRef.current?.querySelector('[aria-current="true"]')?.scrollIntoView({ block: 'nearest' })
   }, [search.selected])
+  // En escritorio el detalle es una columna fija: un nuevo se conserva hasta cambiar de viaje.
   useEffect(() => {
-    if (selected && !selected.isRead) markRead(selected.id)
-  }, [markRead, selected])
+    const previous = previousSelectedRef.current
+    previousSelectedRef.current = selected
+    if (isDesktopLayout && previous && previous.id !== selected?.id && !previous.isRead)
+      markRead(previous.id)
+  }, [isDesktopLayout, markRead, selected])
+  // Mientras el panel está abierto, un viaje nuevo debe seguir incluido en la lista.
+  // Si se marcara aquí como leído, el filtro «Nuevos» lo retiraría antes de renderizar el detalle.
+  function closeDetail() {
+    if (!isDesktopLayout && selected && !selected.isRead) markRead(selected.id)
+    onSearchChange({ selected: '' })
+  }
   function handleRowKeys(event: KeyboardEvent<HTMLButtonElement>) {
     if (event.key === 'Escape') {
       if (!search.selected) return
       event.preventDefault()
-      onSearchChange({ selected: '' })
+      closeDetail()
       return
     }
     const target = nextButton(listRef.current, event.key, 'vertical')
@@ -378,7 +389,7 @@ export function TripsPage({
           className="trip-detail-drawer"
           dialogProps={{ 'aria-label': 'Detalle del viaje' }}
           onOpenChange={(isOpen) => {
-            if (!isOpen) onSearchChange({ selected: '' })
+            if (!isOpen) closeDetail()
           }}
         >
           <DetailDrawerBody className="py-4">

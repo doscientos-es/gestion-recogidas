@@ -131,14 +131,19 @@ describe('TripsPage - navegación por teclado', () => {
     expect(screen.getByRole('button', { name: /Cliente Dos/ })).toBeInTheDocument()
   })
 
-  it('marca como leído el viaje compartido al abrirlo', async () => {
+  it('mantiene un viaje en Nuevos y lo marca como leído al cerrar el detalle', async () => {
     const firstOrder = orders.at(0)
     if (!firstOrder) throw new Error('Se necesita un viaje para probar la apertura.')
     const user = userEvent.setup()
     firstOrder.isRead = false
-    render(<Harness />)
+    render(<Harness initial={{ status: 'new' }} />)
 
     await user.click(screen.getByRole('button', { name: /Cliente Uno/ }))
+
+    expect(screen.getByRole('dialog', { name: 'Detalle del viaje' })).toBeInTheDocument()
+    expect(markRead).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Cerrar' }))
 
     await waitFor(() => expect(markRead).toHaveBeenCalledWith('ord-1'))
   })
@@ -180,6 +185,22 @@ describe('TripsPage - navegación por teclado', () => {
 
     expect(screen.getByLabelText('Detalle del viaje')).toContainElement(screen.getByText('REC-1'))
     expect(screen.queryByRole('dialog', { name: 'Detalle del viaje' })).not.toBeInTheDocument()
+  })
+
+  it('marca un viaje nuevo al cambiar la selección en escritorio', async () => {
+    const firstOrder = orders.at(0)
+    if (!firstOrder) throw new Error('Se necesita un viaje para probar el cambio de selección.')
+    firstOrder.isRead = false
+    mockDesktopLayout()
+    const user = userEvent.setup()
+    render(<Harness initial={{ status: 'new' }} />)
+
+    await user.click(screen.getByRole('button', { name: /Cliente Uno/ }))
+    expect(markRead).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: /Cliente Dos/ }))
+
+    await waitFor(() => expect(markRead).toHaveBeenCalledWith('ord-1'))
   })
 
   it('cierra el drawer y deselecciona el viaje', async () => {

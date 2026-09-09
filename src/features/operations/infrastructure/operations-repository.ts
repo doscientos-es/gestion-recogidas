@@ -3,12 +3,7 @@ import { DRIVER_PAGE_SIZE, type DriverPage } from '../application/driver-queries
 import type { Driver, OperationsState, PickupOrder } from '../application/types'
 import { createSeedState } from './seed-state'
 
-const storageKey = 'gestion-recogidas-demo-v2'
 const sharedOperationsId = true
-
-export function dataMode(): 'demo' | 'supabase' {
-  return import.meta.env.VITE_DATA_MODE === 'supabase' ? 'supabase' : 'demo'
-}
 
 function isOperationsState(value: unknown): value is OperationsState {
   if (!value || typeof value !== 'object') return false
@@ -162,16 +157,6 @@ export function mergeReceivedOrders(
 }
 
 export async function loadOperations(): Promise<OperationsState> {
-  if (dataMode() === 'demo') {
-    const stored = localStorage.getItem(storageKey)
-    if (!stored) return createSeedState()
-    try {
-      const parsed: unknown = JSON.parse(stored)
-      return isOperationsState(parsed) ? normalizeOperationsState(parsed) : createSeedState()
-    } catch {
-      return createSeedState()
-    }
-  }
   const client = createBrowserSupabaseClient()
   await ensureAuthenticated()
   const [stateResult, emailsResult] = await Promise.all([
@@ -191,10 +176,6 @@ export async function loadOperations(): Promise<OperationsState> {
 }
 
 export async function saveOperations(state: OperationsState): Promise<void> {
-  if (dataMode() === 'demo') {
-    localStorage.setItem(storageKey, JSON.stringify(state))
-    return
-  }
   const client = createBrowserSupabaseClient()
   await ensureAuthenticated()
   const result = await client

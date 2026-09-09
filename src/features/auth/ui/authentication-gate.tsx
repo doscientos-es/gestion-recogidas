@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 're
 import { createBrowserSupabaseClient } from '../../../shared/lib/supabase/client'
 
 export function AuthenticationGate({ children }: { children: ReactNode }) {
-  if (import.meta.env.VITE_DATA_MODE !== 'supabase') return children
   return <SupabaseAuthenticationGate>{children}</SupabaseAuthenticationGate>
 }
 

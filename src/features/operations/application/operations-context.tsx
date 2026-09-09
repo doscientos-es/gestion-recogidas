@@ -10,14 +10,13 @@ import {
   type ReactNode,
 } from 'react'
 
-import { dataMode, loadOperations, saveOperations } from '../infrastructure/operations-repository'
+import { loadOperations, saveOperations } from '../infrastructure/operations-repository'
 import { createSeedState } from '../infrastructure/seed-state'
 import type { Driver, OperationsState, PickupOrder } from './types'
 import { addDriver, assignOrder, removeDriver, updateDriver } from './workflow'
 
 interface OperationsContextValue {
   state: OperationsState
-  mode: 'demo' | 'supabase'
   loading: boolean
   saving: boolean
   error: string | undefined
@@ -37,15 +36,14 @@ const OperationsContext = createContext<OperationsContextValue | null>(null)
 
 export function OperationsProvider({ children }: { children: ReactNode }) {
   const seedState = useMemo(() => createSeedState(), [])
-  const mode = dataMode()
   const queryClient = useQueryClient()
-  const queryKey = useMemo(() => ['operations', mode] as const, [mode])
+  const queryKey = useMemo(() => ['operations'] as const, [])
   const { data, isError, isPending, refetch } = useQuery({
     queryKey,
     queryFn: loadOperations,
     staleTime: Infinity,
-    refetchInterval: mode === 'supabase' ? 15_000 : false,
-    refetchOnWindowFocus: mode === 'supabase',
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
   })
   const state = data ?? seedState
   const stateRef = useRef(state)
@@ -85,8 +83,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
   const value = useMemo<OperationsContextValue>(
     () => ({
       state,
-      mode,
-      loading: mode === 'supabase' && isPending,
+      loading: isPending,
       saving,
       error: error ?? (isError ? 'No se han podido cargar los datos.' : undefined),
       clearError: () => setError(undefined),
@@ -125,7 +122,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
       deleteDriver: (driverId) => commit((current) => removeDriver(current, driverId)),
       reset: () => commit(() => createSeedState()),
     }),
-    [commit, error, isError, isPending, mode, refetch, saving, state],
+    [commit, error, isError, isPending, refetch, saving, state],
   )
 
   return <OperationsContext value={value}>{children}</OperationsContext>
