@@ -3,7 +3,12 @@ import type { JourneyLeg, PickupOrder } from '../application/types'
 function value(text: string, label: string): string {
   const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const match = text.match(new RegExp(`(?:^|\\n)${escapedLabel}[ \\t]*:[ \\t]*(.*)`, 'i'))
-  return match?.[1]?.trim() ?? ''
+  const inlineValue = match?.[1]?.trim()
+  if (inlineValue) return inlineValue
+  const nextLine = text.match(
+    new RegExp(`(?:^|\\n)${escapedLabel}[ \\t]*:[ \\t]*\\n+[ \\t]*([^\\n]+)`, 'i'),
+  )
+  return nextLine?.[1]?.trim() ?? ''
 }
 
 function clean(text: string) {
