@@ -85,7 +85,8 @@ export function formatScheduledAt(value: string): string {
 }
 
 export function buildWhatsAppUrl(order: PickupOrder, driver: Driver): string {
-  const message = `Hola ${driver.name.split(' ')[0]}, tienes una recogida el ${formatScheduledAt(order.scheduledAt)} en ${order.pickupAddress}, ${order.pickupCity}, para entregar en ${order.deliveryAddress}, ${order.deliveryCity}. Referencia ${order.reference}.`
+  const passengers = order.passengerCount === 1 ? '1 pasajero' : `${order.passengerCount} pasajeros`
+  const message = `Hola ${driver.name.split(' ')[0]}, tienes un ${order.serviceType.toLocaleLowerCase('es')} el ${formatScheduledAt(order.scheduledAt)}: ${order.pickupAddress}, ${order.pickupCity} → ${order.deliveryAddress}, ${order.deliveryCity}. ${passengers}; equipaje: ${order.luggage}. Referencia ${order.reference}.`
   return `https://wa.me/${driver.phone}?text=${encodeURIComponent(message)}`
 }
 
@@ -100,7 +101,10 @@ export function buildCalendarContent(order: PickupOrder, driver?: Driver): strin
     value.toISOString().replaceAll('-', '').replaceAll(':', '').replace('.000', '')
   const escapeText = (value: string) =>
     value.replaceAll('\\', '\\\\').replaceAll(',', '\\,').replaceAll(';', '\\;')
-  const description = escapeText(`${order.cargo} · ${driver?.name ?? 'Conductor pendiente'}`)
+  const passengers = order.passengerCount === 1 ? '1 pasajero' : `${order.passengerCount} pasajeros`
+  const description = escapeText(
+    `${order.serviceType} · ${passengers} · Equipaje: ${order.luggage} · ${driver?.name ?? 'Conductor pendiente'}`,
+  )
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -109,7 +113,7 @@ export function buildCalendarContent(order: PickupOrder, driver?: Driver): strin
     `UID:${order.id}@gestion-recogidas`,
     `DTSTART:${date(start)}`,
     `DTEND:${date(end)}`,
-    `SUMMARY:${escapeText(`Recogida ${order.reference}`)}`,
+    `SUMMARY:${escapeText(`Traslado ${order.reference}`)}`,
     `LOCATION:${escapeText(`${order.pickupAddress}, ${order.pickupCity}`)}`,
     `DESCRIPTION:${description}`,
     'END:VEVENT',

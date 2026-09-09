@@ -11,6 +11,12 @@ export interface Driver {
   isExternal: boolean
 }
 
+export interface JourneyLeg {
+  origin: string
+  destination: string
+  pickupInstructions?: string
+}
+
 export interface PickupOrder {
   id: string
   reference: string
@@ -20,8 +26,14 @@ export interface PickupOrder {
   deliveryAddress: string
   deliveryCity: string
   scheduledAt: string
-  cargo: string
-  weightKg: number
+  serviceType: string
+  passengerCount: number
+  luggage: string
+  passengerPhone?: string
+  passengerEmail?: string
+  preferences?: string
+  childSeatCount?: number
+  journeys: JourneyLeg[]
   amountCents: number
   source: 'email' | 'manual'
   status: OrderStatus

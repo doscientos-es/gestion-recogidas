@@ -4,6 +4,7 @@ import type { Driver, OperationsState, PickupOrder } from '../application/types'
 import { createSeedState } from './seed-state'
 
 const storageKey = 'gestion-recogidas-demo-v2'
+const sharedOperationsId = true
 
 export function dataMode(): 'demo' | 'supabase' {
   return import.meta.env.VITE_DATA_MODE === 'supabase' ? 'supabase' : 'demo'
@@ -34,8 +35,14 @@ function normalizeOperationsState(state: OperationsState): OperationsState {
         deliveryAddress,
         deliveryCity,
         scheduledAt,
-        cargo,
-        weightKg,
+        serviceType,
+        passengerCount,
+        luggage,
+        passengerPhone,
+        passengerEmail,
+        preferences,
+        childSeatCount,
+        journeys,
         amountCents,
         source,
         status,
@@ -44,7 +51,16 @@ function normalizeOperationsState(state: OperationsState): OperationsState {
         calendarState,
         emailState,
         receivedAt,
-      } = item as Omit<PickupOrder, 'status'> & { status: string }
+      } = item as PickupOrder & { cargo?: string; status: string; weightKg?: number }
+      const legacyOrder = item as PickupOrder & { cargo?: string; status: string; weightKg?: number }
+      const rawStatus = (item as { status?: unknown }).status
+      const legacyPassengers = legacyOrder.cargo?.match(/(\d+)\s*(?:pax|pasajeros?)/i)?.[1]
+      const normalizedJourneys = Array.isArray(journeys)
+        ? journeys.filter(
+            (journey): journey is PickupOrder['journeys'][number] =>
+              Boolean(journey) && typeof journey.origin === 'string' && typeof journey.destination === 'string',
+          )
+        : []
       return {
         id,
         reference,
@@ -54,8 +70,20 @@ function normalizeOperationsState(state: OperationsState): OperationsState {
         deliveryAddress,
         deliveryCity,
         scheduledAt,
-        cargo,
-        weightKg,
+        serviceType: serviceType || legacyOrder.cargo || 'Servicio de pasajeros',
+        passengerCount:
+          typeof passengerCount === 'number' && passengerCount >= 0
+            ? passengerCount
+            : Number(legacyPassengers ?? 0),
+        luggage: luggage || 'No indicado',
+        ...(passengerPhone ? { passengerPhone } : {}),
+        ...(passengerEmail ? { passengerEmail } : {}),
+        ...(preferences ? { preferences } : {}),
+        ...(typeof childSeatCount === 'number' && childSeatCount > 0 ? { childSeatCount } : {}),
+        journeys:
+          normalizedJourneys.length > 0
+            ? normalizedJourneys
+            : [{ origin: pickupAddress, destination: deliveryAddress }],
         amountCents,
         source,
         ...(attachmentName !== undefined ? { attachmentName } : {}),
@@ -64,7 +92,7 @@ function normalizeOperationsState(state: OperationsState): OperationsState {
         emailState,
         receivedAt,
         status:
-          status === 'received' || status === 'pending_assignment'
+          rawStatus === 'received' || status === 'pending_assignment'
             ? 'pending_assignment'
             : 'assigned',
       }
@@ -72,14 +100,39 @@ function normalizeOperationsState(state: OperationsState): OperationsState {
   }
 }
 
-async function currentUserId(): Promise<string> {
+async function ensureAuthenticated(): Promise<void> {
   const client = createBrowserSupabaseClient()
   const current = await client.auth.getUser()
-  if (current.data.user) return current.data.user.id
+  if (current.data.user) return
   const signed = await client.auth.signInAnonymously()
   if (signed.error || !signed.data.user)
     throw new Error('No se ha podido iniciar la sesión segura de demostración.')
-  return signed.data.user.id
+}
+
+function inboundOrders(value: unknown): PickupOrder[] {
+  if (!Array.isArray(value)) return []
+  return normalizeOperationsState({ orders: value as PickupOrder[], drivers: [], activity: [] }).orders
+}
+
+/** Combina mensajes nuevos sin sustituir las modificaciones operativas ya compartidas. */
+export function mergeReceivedOrders(state: OperationsState, received: PickupOrder[]): OperationsState {
+  const existing = new Set(state.orders.map((order) => order.id))
+  const newOrders = received.filter((order) => !existing.has(order.id))
+  if (newOrders.length === 0) return state
+  return {
+    ...state,
+    orders: [...newOrders, ...state.orders],
+    activity: [
+      ...newOrders.map((order) => ({
+        id: `email-${order.id}`,
+        title: 'Correo recibido y analizado',
+        detail: `${order.reference} · ${order.passengerCount || '—'} pasajeros`,
+        at: 'Ahora',
+        tone: 'info' as const,
+      })),
+      ...state.activity,
+    ],
+  }
 }
 
 export async function loadOperations(): Promise<OperationsState> {
@@ -94,17 +147,22 @@ export async function loadOperations(): Promise<OperationsState> {
     }
   }
   const client = createBrowserSupabaseClient()
-  const ownerId = await currentUserId()
-  const result = await client
-    .from('demo_workspaces')
+  await ensureAuthenticated()
+  const [stateResult, emailsResult] = await Promise.all([
+    client
+      .from('shared_operations')
     .select('state')
-    .eq('owner_id', ownerId)
-    .maybeSingle()
-  if (result.error) throw new Error('No se han podido recuperar las operaciones de Supabase.')
-  if (isOperationsState(result.data?.state)) return normalizeOperationsState(result.data.state)
-  const state = createSeedState()
-  await saveOperations(state)
-  return state
+      .eq('id', sharedOperationsId)
+      .maybeSingle(),
+    client.from('inbound_emails').select('parsed_order').order('received_at', { ascending: false }),
+  ])
+  if (stateResult.error || emailsResult.error)
+    throw new Error('No se han podido recuperar las operaciones compartidas.')
+  const state = isOperationsState(stateResult.data?.state)
+    ? normalizeOperationsState(stateResult.data.state)
+    : createSeedState()
+  if (!stateResult.data) await saveOperations(state)
+  return mergeReceivedOrders(state, inboundOrders(emailsResult.data?.map((item) => item.parsed_order)))
 }
 
 export async function saveOperations(state: OperationsState): Promise<void> {
@@ -113,16 +171,16 @@ export async function saveOperations(state: OperationsState): Promise<void> {
     return
   }
   const client = createBrowserSupabaseClient()
-  const ownerId = await currentUserId()
+  await ensureAuthenticated()
   const result = await client
-    .from('demo_workspaces')
-    .upsert({ owner_id: ownerId, state }, { onConflict: 'owner_id' })
+    .from('shared_operations')
+    .upsert({ id: sharedOperationsId, state }, { onConflict: 'id' })
   if (result.error) throw new Error('No se han podido guardar los cambios en Supabase.')
 }
 
 export async function loadDriversPage(search: string, page: number): Promise<DriverPage> {
   const client = createBrowserSupabaseClient()
-  await currentUserId()
+  await ensureAuthenticated()
   const result = await client.rpc('get_drivers_page', {
     requested_page: page,
     requested_page_size: DRIVER_PAGE_SIZE,

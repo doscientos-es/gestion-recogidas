@@ -40,8 +40,9 @@ describe('pickup workflow', () => {
     if (!order || !driver)
       throw new Error('Los datos de demo deben incluir una orden y un conductor.')
     const url = buildWhatsAppUrl(order, driver)
-    expect(decodeURIComponent(url)).toContain('Carrer de la Metal·lúrgia, 38')
-    expect(decodeURIComponent(url)).toContain('Avinguda de la Indústria, 17')
+    expect(decodeURIComponent(url)).toContain("Carrer de la Mare de Déu de l'Esperança, 10")
+    expect(decodeURIComponent(url)).toContain('El Prat Airport (BCN)')
+    expect(decodeURIComponent(url)).toContain('1 pasajero')
   })
 
   it('builds a valid calendar invitation for the assigned driver', () => {
@@ -52,8 +53,9 @@ describe('pickup workflow', () => {
       throw new Error('Los datos de demo deben incluir una orden y un conductor.')
     const invitation = buildCalendarContent(order, driver)
     expect(invitation).toContain('BEGIN:VCALENDAR')
-    expect(invitation).toContain('DTSTART:20260910T073000Z')
-    expect(invitation).toContain('Carrer de la Metal·lúrgia\\, 38')
+    expect(invitation).toContain('DTSTART:20260913T031500Z')
+    expect(invitation).toContain("Carrer de la Mare de Déu de l'Esperança\\, 10")
+    expect(invitation).toContain('Equipaje: 1 maleta grande y 1 equipaje de mano')
   })
 })
 

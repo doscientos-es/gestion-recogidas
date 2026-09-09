@@ -1,5 +1,5 @@
 import { Button, Label } from '@doscientos/ui'
-import { CalendarClock, MailCheck, MessageCircle, Package, Pencil, WalletCards } from 'lucide-react'
+import { BriefcaseBusiness, CalendarClock, Mail, MailCheck, MessageCircle, Pencil, Phone, Route, UsersRound, WalletCards } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
 
 import { useOperations } from '../application/operations-context'
@@ -49,9 +49,14 @@ export function OrderDetailCard({ order }: { order: PickupOrder }) {
               value={formatScheduledAt(order.scheduledAt)}
             />
             <Info
-              icon={<Package aria-hidden />}
-              label="Carga"
-              value={`${order.cargo} · ${order.weightKg} kg`}
+              icon={<UsersRound aria-hidden />}
+              label="Pasajeros"
+              value={order.passengerCount ? `${order.passengerCount} pasajeros` : 'No indicado'}
+            />
+            <Info
+              icon={<BriefcaseBusiness aria-hidden />}
+              label="Equipaje"
+              value={order.luggage}
             />
             <Info
               icon={<WalletCards aria-hidden />}
@@ -59,6 +64,7 @@ export function OrderDetailCard({ order }: { order: PickupOrder }) {
               value={formatMoney(order.amountCents)}
             />
           </div>
+          <PassengerServiceDetails order={order} />
         </>
       )}
       {order.status === 'pending_assignment' || order.status === 'assigned' ? (
@@ -113,8 +119,12 @@ function OrderEditForm({ order, onDone }: { order: PickupOrder; onDone: () => vo
     deliveryAddress: order.deliveryAddress,
     deliveryCity: order.deliveryCity,
     date: toLocalInput(order.scheduledAt),
-    cargo: order.cargo,
-    weightKg: String(order.weightKg),
+    serviceType: order.serviceType,
+    passengerCount: String(order.passengerCount),
+    luggage: order.luggage,
+    passengerPhone: order.passengerPhone ?? '',
+    passengerEmail: order.passengerEmail ?? '',
+    preferences: order.preferences ?? '',
     amountEuros: (order.amountCents / 100).toFixed(2),
   })
   function submit(event: FormEvent) {
@@ -126,8 +136,12 @@ function OrderEditForm({ order, onDone }: { order: PickupOrder; onDone: () => vo
       deliveryAddress: values.deliveryAddress.trim(),
       deliveryCity: values.deliveryCity.trim(),
       scheduledAt: new Date(values.date).toISOString(),
-      cargo: values.cargo.trim(),
-      weightKg: Number(values.weightKg),
+      serviceType: values.serviceType.trim(),
+      passengerCount: Number(values.passengerCount),
+      luggage: values.luggage.trim(),
+      ...(values.passengerPhone.trim() ? { passengerPhone: values.passengerPhone.trim() } : {}),
+      ...(values.passengerEmail.trim() ? { passengerEmail: values.passengerEmail.trim() } : {}),
+      ...(values.preferences.trim() ? { preferences: values.preferences.trim() } : {}),
       amountCents: Math.round(Number(values.amountEuros) * 100),
     })
     onDone()
@@ -173,16 +187,38 @@ function OrderEditForm({ order, onDone }: { order: PickupOrder; onDone: () => vo
         onChange={(deliveryCity) => setValues({ ...values, deliveryCity })}
       />
       <EditField
-        label="Carga"
-        value={values.cargo}
-        onChange={(cargo) => setValues({ ...values, cargo })}
+        label="Tipo de servicio"
+        value={values.serviceType}
+        onChange={(serviceType) => setValues({ ...values, serviceType })}
       />
       <EditField
-        label="Peso (kg)"
+        label="Pasajeros"
         type="number"
-        min="1"
-        value={values.weightKg}
-        onChange={(weightKg) => setValues({ ...values, weightKg })}
+        min="0"
+        value={values.passengerCount}
+        onChange={(passengerCount) => setValues({ ...values, passengerCount })}
+      />
+      <EditField
+        label="Equipaje"
+        value={values.luggage}
+        onChange={(luggage) => setValues({ ...values, luggage })}
+      />
+      <EditField
+        label="Teléfono del pasajero"
+        type="tel"
+        value={values.passengerPhone}
+        onChange={(passengerPhone) => setValues({ ...values, passengerPhone })}
+      />
+      <EditField
+        label="Email del pasajero"
+        type="email"
+        value={values.passengerEmail}
+        onChange={(passengerEmail) => setValues({ ...values, passengerEmail })}
+      />
+      <EditField
+        label="Preferencias"
+        value={values.preferences}
+        onChange={(preferences) => setValues({ ...values, preferences })}
       />
       <EditField
         label="Importe (€)"
@@ -202,6 +238,75 @@ function OrderEditForm({ order, onDone }: { order: PickupOrder; onDone: () => vo
   )
 }
 
+function PassengerServiceDetails({ order }: { order: PickupOrder }) {
+  const journeys = Array.isArray(order.journeys)
+    ? order.journeys
+    : [{ origin: order.pickupAddress, destination: order.deliveryAddress }]
+  return (
+    <div className="space-y-3 rounded-xl border bg-muted/30 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Servicio</p>
+          <p className="mt-1 font-medium">{order.serviceType}</p>
+        </div>
+        {order.childSeatCount ? (
+          <span className="rounded-full bg-background px-2.5 py-1 text-xs">
+            {order.childSeatCount} silla infantil
+          </span>
+        ) : null}
+      </div>
+      {order.passengerPhone || order.passengerEmail ? (
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+          {order.passengerPhone ? (
+            <span className="flex items-center gap-1.5">
+              <Phone aria-hidden className="size-3.5" />
+              {order.passengerPhone}
+            </span>
+          ) : null}
+          {order.passengerEmail ? (
+            <span className="flex items-center gap-1.5">
+              <Mail aria-hidden className="size-3.5" />
+              {order.passengerEmail}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+      {order.preferences ? (
+        <p className="text-sm">
+          <span className="font-medium">Preferencias: </span>
+          {order.preferences}
+        </p>
+      ) : null}
+      {journeys.length > 1 ? (
+        <div className="border-t pt-3">
+          <p className="flex items-center gap-1.5 text-sm font-medium">
+            <Route aria-hidden className="size-4" />
+            Itinerario completo
+          </p>
+          <ol className="mt-2 space-y-2 text-sm">
+            {journeys.map((journey, index) => (
+              <li key={`${journey.origin}-${journey.destination}-${index}`}>
+                <span className="font-medium">{index + 1}. </span>
+                {journey.origin} → {journey.destination}
+                {journey.pickupInstructions ? (
+                  <span className="block pl-4 text-muted-foreground">
+                    {journey.pickupInstructions}
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : journeys[0]?.pickupInstructions ? (
+        <p className="text-sm">
+          <span className="font-medium">Indicaciones: </span>
+          {journeys[0].pickupInstructions}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
 function EditField({
   label,
   value,
@@ -213,7 +318,7 @@ function EditField({
   label: string
   value: string
   onChange: (value: string) => void
-  type?: 'text' | 'number'
+  type?: 'text' | 'number' | 'tel' | 'email'
   min?: string
   step?: string
 }) {

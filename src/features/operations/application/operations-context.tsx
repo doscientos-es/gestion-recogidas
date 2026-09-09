@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   createContext,
   useCallback,
@@ -36,13 +36,17 @@ const OperationsContext = createContext<OperationsContextValue | null>(null)
 
 export function OperationsProvider({ children }: { children: ReactNode }) {
   const seedState = useMemo(() => createSeedState(), [])
+  const mode = dataMode()
+  const queryClient = useQueryClient()
+  const queryKey = useMemo(() => ['operations', mode] as const, [mode])
   const query = useQuery({
-    queryKey: ['operations', dataMode()],
+    queryKey,
     queryFn: loadOperations,
     staleTime: Infinity,
+    refetchInterval: mode === 'supabase' ? 15_000 : false,
+    refetchOnWindowFocus: mode === 'supabase',
   })
-  const [localState, setLocalState] = useState<OperationsState>()
-  const state = localState ?? query.data ?? seedState
+  const state = query.data ?? seedState
   const stateRef = useRef(state)
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
   const pendingSavesRef = useRef(0)
@@ -56,7 +60,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
     const next = change(stateRef.current)
     if (next === stateRef.current) return false
     stateRef.current = next
-    setLocalState(next)
+    queryClient.setQueryData(queryKey, next)
     setError(undefined)
     pendingSavesRef.current += 1
     setSaving(true)
@@ -70,13 +74,13 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
         if (pendingSavesRef.current === 0) setSaving(false)
       })
     return true
-  }, [])
+  }, [queryClient, queryKey])
 
   const value = useMemo<OperationsContextValue>(
     () => ({
       state,
-      mode: dataMode(),
-      loading: dataMode() === 'supabase' && query.isPending,
+      mode,
+      loading: mode === 'supabase' && query.isPending,
       saving,
       error: error ?? (query.isError ? 'No se han podido cargar los datos.' : undefined),
       clearError: () => setError(undefined),
@@ -104,7 +108,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
       deleteDriver: (driverId) => commit((current) => removeDriver(current, driverId)),
       reset: () => commit(() => createSeedState()),
     }),
-    [commit, error, query.isError, query.isPending, query.refetch, saving, state],
+    [commit, error, mode, query.isError, query.isPending, query.refetch, saving, state],
   )
 
   return <OperationsContext value={value}>{children}</OperationsContext>

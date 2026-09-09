@@ -319,7 +319,9 @@ export function TripsPage({
                       <span className="inbox-row-route">
                         {order.pickupCity} → {order.deliveryCity}
                       </span>
-                      <small>{formatScheduledAt(order.scheduledAt)}</small>
+                      <small>
+                        {formatScheduledAt(order.scheduledAt)} · {order.passengerCount || '—'} pasajeros
+                      </small>
                     </span>
                   </button>
                 </li>
@@ -457,8 +459,9 @@ function ManualOrderForm({ onCreated }: { onCreated: (orderId: string) => void }
     deliveryAddress: 'Carrer de Mallorca, 214',
     deliveryCity: 'Barcelona',
     date: '2026-09-11T10:00',
-    cargo: 'Material industrial embalado',
-    weightKg: '240',
+    serviceType: 'Transfer privado',
+    passengerCount: '2',
+    luggage: '2 maletas grandes',
     amountEuros: '175',
   })
   function submit(event: FormEvent) {
@@ -473,8 +476,15 @@ function ManualOrderForm({ onCreated }: { onCreated: (orderId: string) => void }
       deliveryAddress: values.deliveryAddress.trim(),
       deliveryCity: values.deliveryCity.trim(),
       scheduledAt: new Date(values.date).toISOString(),
-      cargo: values.cargo.trim(),
-      weightKg: Number(values.weightKg),
+      serviceType: values.serviceType.trim(),
+      passengerCount: Number(values.passengerCount),
+      luggage: values.luggage.trim(),
+      journeys: [
+        {
+          origin: values.pickupAddress.trim(),
+          destination: values.deliveryAddress.trim(),
+        },
+      ],
       amountCents: Math.round(Number(values.amountEuros) * 100),
       source: 'manual',
       status: 'pending_assignment',
@@ -515,16 +525,21 @@ function ManualOrderForm({ onCreated }: { onCreated: (orderId: string) => void }
             onChange={(deliveryCity) => setValues({ ...values, deliveryCity })}
           />
           <Field
-            label="Carga"
-            value={values.cargo}
-            onChange={(cargo) => setValues({ ...values, cargo })}
+            label="Tipo de servicio"
+            value={values.serviceType}
+            onChange={(serviceType) => setValues({ ...values, serviceType })}
           />
           <Field
-            label="Peso (kg)"
+            label="Pasajeros"
             type="number"
-            min="1"
-            value={values.weightKg}
-            onChange={(weightKg) => setValues({ ...values, weightKg })}
+            min="0"
+            value={values.passengerCount}
+            onChange={(passengerCount) => setValues({ ...values, passengerCount })}
+          />
+          <Field
+            label="Equipaje"
+            value={values.luggage}
+            onChange={(luggage) => setValues({ ...values, luggage })}
           />
           <Field
             label="Importe (€)"
@@ -566,7 +581,7 @@ function Field({
   label: string
   value: string
   onChange: (value: string) => void
-  type?: 'text' | 'number'
+  type?: 'text' | 'number' | 'tel' | 'email'
   min?: string
   step?: string
 }) {

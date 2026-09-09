@@ -22,6 +22,7 @@ NOMBRE Y APELLIDOS: Iker Bericat Pladevall
 TELÉFONO: 687681421
 EMAIL: cjorda@damoclex.com
 Nº PAX: 1
+EQUIPAJE: 1 maleta grande y 1 equipaje de mano
 TRAYECTO 1:
 ORIGEN: Carrer de la Mare de Déu de l'Esperança 10,
 DESTINO: El Prat Airport (BCN)
@@ -81,16 +82,25 @@ describe('parseMontaxEmail', () => {
     expect(result.amountCents).toBe(52400)
   })
 
-  it('incluye información de trayectos y teléfono en el cargo', () => {
+  it('extrae los datos operativos de pasajeros y todos los trayectos', () => {
     const result = parseMontaxEmail({
       emailId: 'test-4',
       text: emailText,
     })
 
-    expect(result.cargo).toContain('Transfer-As Directed')
-    expect(result.cargo).toContain('1 pax')
-    expect(result.cargo).toContain('2 trayectos')
-    expect(result.cargo).toContain('Tel 687681421')
+    expect(result.serviceType).toBe('Transfer-As Directed')
+    expect(result.passengerCount).toBe(1)
+    expect(result.luggage).toBe('1 maleta grande y 1 equipaje de mano')
+    expect(result.passengerPhone).toBe('687681421')
+    expect(result.passengerEmail).toBe('cjorda@damoclex.com')
+    expect(result.preferences).toBe('Asiento infantil Grupo 0 (0-13 kg)')
+    expect(result.childSeatCount).toBe(1)
+    expect(result.journeys).toHaveLength(2)
+    expect(result.journeys[0]).toMatchObject({
+      origin: "Carrer de la Mare de Déu de l'Esperança 10,",
+      destination: 'El Prat Airport (BCN)',
+      pickupInstructions: 'A la salida del terminal (chófer con cartel)',
+    })
   })
 
   it('maneja email simple sin trayectos múltiples', () => {
@@ -110,7 +120,12 @@ Nº PAX: 2`
     expect(result.reference).toBe('MONTAX-12345')
     expect(result.pickupAddress).toBe('Calle Falsa 123')
     expect(result.deliveryAddress).toBe('Avenida Siempre Viva 742')
-    expect(result.cargo).toBe('Transfer · 2 pax')
+    expect(result.serviceType).toBe('Transfer')
+    expect(result.passengerCount).toBe(2)
+    expect(result.luggage).toBe('No indicado')
+    expect(result.journeys).toEqual([
+      { origin: 'Calle Falsa 123', destination: 'Avenida Siempre Viva 742' },
+    ])
     expect(result.amountCents).toBe(0)
   })
 

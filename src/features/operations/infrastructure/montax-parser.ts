@@ -1,7 +1,7 @@
-import type { PickupOrder } from '../application/types'
+import type { JourneyLeg, PickupOrder } from '../application/types'
 
 function value(text: string, label: string): string {
-  const match = text.match(new RegExp(`${label}\\s*:?\\s*(.*)`, 'i'))
+  const match = text.match(new RegExp(`(?:^|\\n)${label}[ \\t]*:?[ \\t]*(.*)`, 'i'))
   return match?.[1]?.trim() ?? ''
 }
 
@@ -12,13 +12,8 @@ function clean(text: string) {
     .replace(/[ ]{2,}/g, ' ')
 }
 
-interface Trayecto {
-  origen: string
-  destino: string
-}
-
-function extractTrayectos(text: string): Trayecto[] {
-  const trayectos: Trayecto[] = []
+function extractTrayectos(text: string): JourneyLeg[] {
+  const trayectos: JourneyLeg[] = []
   // Dividir el texto en bloques por "TRAYECTO N:"
   const bloques = text.split(/TRAYECTO\s+\d+\s*:/i)
 
@@ -28,14 +23,20 @@ function extractTrayectos(text: string): Trayecto[] {
     if (!bloque) continue
     const origenMatch = bloque.match(/ORIGEN\s*:?\s*(.+?)(?=LUGAR|DESTINO|TRAYECTO|EXTRAS|PREFERENCIAS|PRECIO|$)/is)
     const destinoMatch = bloque.match(/DESTINO\s*:?\s*(.+?)(?=LUGAR|TRAYECTO|EXTRAS|PREFERENCIAS|PRECIO|$)/is)
+    const recogidaMatch = bloque.match(/LUGAR\s+DE\s+RECOGIDA\s*:?\s*(.+?)(?=TRAYECTO|EXTRAS|PREFERENCIAS|PRECIO|$)/is)
 
     const origen = origenMatch?.[1]?.trim() ?? ''
     const destinoRaw = destinoMatch?.[1]?.trim() ?? ''
+    const pickupInstructions = recogidaMatch?.[1]?.trim()
     // Limpiar el destino de cualquier texto adicional de "LUGAR DE ENTREGA"
     const destino = destinoRaw.split(/LUGAR[^:]*:/i)[0]?.trim() ?? destinoRaw
 
     if (origen && destino) {
-      trayectos.push({ origen, destino })
+      trayectos.push({
+        origin: origen,
+        destination: destino,
+        ...(pickupInstructions ? { pickupInstructions } : {}),
+      })
     }
   }
 
@@ -56,6 +57,20 @@ function extractTelefono(text: string): string {
   return match?.[1]?.replace(/\s/g, '') ?? ''
 }
 
+function firstValue(text: string, labels: string[]): string {
+  for (const label of labels) {
+    const found = value(text, label)
+    if (found) return found
+  }
+  return ''
+}
+
+function extractCount(text: string, labels: string[]): number | undefined {
+  const found = firstValue(text, labels)
+  const count = Number.parseInt(found, 10)
+  return Number.isFinite(count) && count > 0 ? count : undefined
+}
+
 export function parseMontaxEmail(input: {
   text?: string
   html?: string
@@ -70,14 +85,16 @@ export function parseMontaxEmail(input: {
   const trayectos = extractTrayectos(raw)
   const primerTrayecto = trayectos[0]
 
-  const origin = primerTrayecto?.origen || value(raw, 'ORIGEN') || 'Origen pendiente'
-  const destination = primerTrayecto?.destino || value(raw, 'DESTINO') || 'Destino pendiente'
+  const origin = primerTrayecto?.origin || value(raw, 'ORIGEN') || 'Origen pendiente'
+  const destination = primerTrayecto?.destination || value(raw, 'DESTINO') || 'Destino pendiente'
 
   const tipoServicio = value(raw, 'TIPO SERVICIO') || 'Servicio'
-  const pax = value(raw, 'Nº PAX')
-  const numTrayectos = trayectos.length
-  const trayectosInfo = numTrayectos > 1 ? ` · ${numTrayectos} trayectos` : ''
+  const passengerCount = extractCount(raw, ['Nº PAX', 'NUMERO DE PASAJEROS']) ?? 0
   const telefono = extractTelefono(raw)
+  const passengerEmail = value(raw, 'EMAIL')
+  const luggage = firstValue(raw, ['EQUIPAJE', 'Nº MALETAS', 'NUMERO DE MALETAS', 'MALETAS', 'MALETERO'])
+  const preferences = value(raw, 'PREFERENCIAS')
+  const childSeatCount = extractCount(raw, ['ASIENTO INFANTIL', 'SILLAS INFANTILES'])
 
   let scheduledAt = new Date().toISOString()
   if (date && time) {
@@ -102,8 +119,14 @@ export function parseMontaxEmail(input: {
     deliveryAddress: destination,
     deliveryCity: '',
     scheduledAt,
-    cargo: `${tipoServicio} · ${pax} pax${trayectosInfo}${telefono ? ` · Tel ${telefono}` : ''}`,
-    weightKg: 0,
+    serviceType: tipoServicio,
+    passengerCount,
+    luggage: luggage || 'No indicado',
+    ...(telefono ? { passengerPhone: telefono } : {}),
+    ...(passengerEmail ? { passengerEmail } : {}),
+    ...(preferences ? { preferences } : {}),
+    ...(childSeatCount ? { childSeatCount } : {}),
+    journeys: trayectos.length ? trayectos : [{ origin, destination }],
     amountCents,
     source: 'email',
     status: 'pending_assignment',
