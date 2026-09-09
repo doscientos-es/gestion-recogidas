@@ -250,7 +250,7 @@ function PassengerServiceDetails({ order }: { order: PickupOrder }) {
     ? order.journeys
     : [{ origin: order.pickupAddress, destination: order.deliveryAddress }]
   return (
-    <div className="bg-muted/30 space-y-3 rounded-xl border p-4">
+    <div className="bg-muted/30 border-border space-y-3 rounded-xl border p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">

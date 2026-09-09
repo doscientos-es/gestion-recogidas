@@ -100,6 +100,13 @@ describe('TripsPage - navegación por teclado', () => {
     expect(screen.queryByRole('dialog', { name: 'Detalle del viaje' })).not.toBeInTheDocument()
   })
 
+  it('muestra la fecha y los pasajeros sin resumir las ciudades en cada fila', () => {
+    render(<Harness />)
+
+    expect(screen.queryByText('Terrassa → Barcelona')).not.toBeInTheDocument()
+    expect(screen.getAllByLabelText('2 pasajeros')).toHaveLength(3)
+  })
+
   it('abre el detalle seleccionado en un drawer', async () => {
     const user = userEvent.setup()
     render(<Harness />)

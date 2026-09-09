@@ -126,9 +126,7 @@ async function ensureAuthenticated(): Promise<void> {
   const client = createBrowserSupabaseClient()
   const current = await client.auth.getUser()
   if (current.data.user) return
-  const signed = await client.auth.signInAnonymously()
-  if (signed.error || !signed.data.user)
-    throw new Error('No se ha podido iniciar la sesión segura de demostración.')
+  throw new Error('Inicia sesión para consultar las operaciones compartidas.')
 }
 
 function inboundOrders(value: unknown): PickupOrder[] {

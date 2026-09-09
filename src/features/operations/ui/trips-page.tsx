@@ -10,7 +10,14 @@ import {
   Popover,
 } from '@doscientos/ui'
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { ChevronLeft, ChevronRight, Inbox, Search, SlidersHorizontal } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Inbox,
+  Search,
+  SlidersHorizontal,
+  UsersRound,
+} from 'lucide-react'
 import {
   useEffect,
   useMemo,
@@ -316,13 +323,14 @@ export function TripsPage({
                       <StatusBadge status={order.status} />
                     </span>
                     <span className="inbox-row-meta">
-                      <span className="inbox-row-route">
-                        {order.pickupCity} → {order.deliveryCity}
+                      <small>{formatScheduledAt(order.scheduledAt)}</small>
+                      <span
+                        className="text-muted-foreground flex items-center gap-1 text-xs"
+                        aria-label={`${order.passengerCount || 'No indicado'} pasajeros`}
+                      >
+                        <UsersRound aria-hidden className="size-3.5" />
+                        {order.passengerCount || '—'}
                       </span>
-                      <small>
-                        {formatScheduledAt(order.scheduledAt)} · {order.passengerCount || '—'}{' '}
-                        pasajeros
-                      </small>
                     </span>
                   </button>
                 </li>
