@@ -41,7 +41,15 @@ function normalizeOperationsState(state: OperationsState): OperationsState {
         passengerPhone,
         passengerEmail,
         preferences,
+        language,
         childSeatCount,
+        driverObservations,
+        waitHours,
+        waitRateCents,
+        waitAmountCents,
+        journeyAmountCents,
+        extrasAmountCents,
+        waitingConditions,
         journeys,
         amountCents,
         source,
@@ -52,13 +60,19 @@ function normalizeOperationsState(state: OperationsState): OperationsState {
         emailState,
         receivedAt,
       } = item as PickupOrder & { cargo?: string; status: string; weightKg?: number }
-      const legacyOrder = item as PickupOrder & { cargo?: string; status: string; weightKg?: number }
+      const legacyOrder = item as PickupOrder & {
+        cargo?: string
+        status: string
+        weightKg?: number
+      }
       const rawStatus = (item as { status?: unknown }).status
       const legacyPassengers = legacyOrder.cargo?.match(/(\d+)\s*(?:pax|pasajeros?)/i)?.[1]
       const normalizedJourneys = Array.isArray(journeys)
         ? journeys.filter(
             (journey): journey is PickupOrder['journeys'][number] =>
-              Boolean(journey) && typeof journey.origin === 'string' && typeof journey.destination === 'string',
+              Boolean(journey) &&
+              typeof journey.origin === 'string' &&
+              typeof journey.destination === 'string',
           )
         : []
       return {
@@ -79,7 +93,15 @@ function normalizeOperationsState(state: OperationsState): OperationsState {
         ...(passengerPhone ? { passengerPhone } : {}),
         ...(passengerEmail ? { passengerEmail } : {}),
         ...(preferences ? { preferences } : {}),
+        ...(language ? { language } : {}),
         ...(typeof childSeatCount === 'number' && childSeatCount > 0 ? { childSeatCount } : {}),
+        ...(driverObservations ? { driverObservations } : {}),
+        ...(waitHours ? { waitHours } : {}),
+        ...(typeof waitRateCents === 'number' ? { waitRateCents } : {}),
+        ...(typeof waitAmountCents === 'number' ? { waitAmountCents } : {}),
+        ...(typeof journeyAmountCents === 'number' ? { journeyAmountCents } : {}),
+        ...(typeof extrasAmountCents === 'number' ? { extrasAmountCents } : {}),
+        ...(waitingConditions ? { waitingConditions } : {}),
         journeys:
           normalizedJourneys.length > 0
             ? normalizedJourneys
@@ -111,11 +133,15 @@ async function ensureAuthenticated(): Promise<void> {
 
 function inboundOrders(value: unknown): PickupOrder[] {
   if (!Array.isArray(value)) return []
-  return normalizeOperationsState({ orders: value as PickupOrder[], drivers: [], activity: [] }).orders
+  return normalizeOperationsState({ orders: value as PickupOrder[], drivers: [], activity: [] })
+    .orders
 }
 
 /** Combina mensajes nuevos sin sustituir las modificaciones operativas ya compartidas. */
-export function mergeReceivedOrders(state: OperationsState, received: PickupOrder[]): OperationsState {
+export function mergeReceivedOrders(
+  state: OperationsState,
+  received: PickupOrder[],
+): OperationsState {
   const existing = new Set(state.orders.map((order) => order.id))
   const newOrders = received.filter((order) => !existing.has(order.id))
   if (newOrders.length === 0) return state
@@ -149,11 +175,7 @@ export async function loadOperations(): Promise<OperationsState> {
   const client = createBrowserSupabaseClient()
   await ensureAuthenticated()
   const [stateResult, emailsResult] = await Promise.all([
-    client
-      .from('shared_operations')
-    .select('state')
-      .eq('id', sharedOperationsId)
-      .maybeSingle(),
+    client.from('shared_operations').select('state').eq('id', sharedOperationsId).maybeSingle(),
     client.from('inbound_emails').select('parsed_order').order('received_at', { ascending: false }),
   ])
   if (stateResult.error || emailsResult.error)
@@ -162,7 +184,10 @@ export async function loadOperations(): Promise<OperationsState> {
     ? normalizeOperationsState(stateResult.data.state)
     : createSeedState()
   if (!stateResult.data) await saveOperations(state)
-  return mergeReceivedOrders(state, inboundOrders(emailsResult.data?.map((item) => item.parsed_order)))
+  return mergeReceivedOrders(
+    state,
+    inboundOrders(emailsResult.data?.map((item) => item.parsed_order)),
+  )
 }
 
 export async function saveOperations(state: OperationsState): Promise<void> {

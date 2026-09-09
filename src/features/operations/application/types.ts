@@ -15,6 +15,9 @@ export interface JourneyLeg {
   origin: string
   destination: string
   pickupInstructions?: string
+  originInstructions?: string
+  destinationInstructions?: string
+  expectedWait?: string
 }
 
 export interface PickupOrder {
@@ -32,7 +35,15 @@ export interface PickupOrder {
   passengerPhone?: string
   passengerEmail?: string
   preferences?: string
+  language?: string
   childSeatCount?: number
+  driverObservations?: string
+  waitHours?: string
+  waitRateCents?: number
+  waitAmountCents?: number
+  journeyAmountCents?: number
+  extrasAmountCents?: number
+  waitingConditions?: string
   journeys: JourneyLeg[]
   amountCents: number
   source: 'email' | 'manual'

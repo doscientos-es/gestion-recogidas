@@ -320,7 +320,8 @@ export function TripsPage({
                         {order.pickupCity} → {order.deliveryCity}
                       </span>
                       <small>
-                        {formatScheduledAt(order.scheduledAt)} · {order.passengerCount || '—'} pasajeros
+                        {formatScheduledAt(order.scheduledAt)} · {order.passengerCount || '—'}{' '}
+                        pasajeros
                       </small>
                     </span>
                   </button>

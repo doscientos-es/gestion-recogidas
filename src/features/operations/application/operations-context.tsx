@@ -39,14 +39,14 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
   const mode = dataMode()
   const queryClient = useQueryClient()
   const queryKey = useMemo(() => ['operations', mode] as const, [mode])
-  const query = useQuery({
+  const { data, isError, isPending, refetch } = useQuery({
     queryKey,
     queryFn: loadOperations,
     staleTime: Infinity,
     refetchInterval: mode === 'supabase' ? 15_000 : false,
     refetchOnWindowFocus: mode === 'supabase',
   })
-  const state = query.data ?? seedState
+  const state = data ?? seedState
   const stateRef = useRef(state)
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
   const pendingSavesRef = useRef(0)
@@ -56,36 +56,41 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
     stateRef.current = state
   }, [state])
 
-  const commit = useCallback((change: (current: OperationsState) => OperationsState): boolean => {
-    const next = change(stateRef.current)
-    if (next === stateRef.current) return false
-    stateRef.current = next
-    queryClient.setQueryData(queryKey, next)
-    setError(undefined)
-    pendingSavesRef.current += 1
-    setSaving(true)
-    saveQueueRef.current = saveQueueRef.current
-      .then(() => saveOperations(next))
-      .catch((reason: unknown) => {
-        setError(reason instanceof Error ? reason.message : 'No se han podido guardar los cambios.')
-      })
-      .finally(() => {
-        pendingSavesRef.current -= 1
-        if (pendingSavesRef.current === 0) setSaving(false)
-      })
-    return true
-  }, [queryClient, queryKey])
+  const commit = useCallback(
+    (change: (current: OperationsState) => OperationsState): boolean => {
+      const next = change(stateRef.current)
+      if (next === stateRef.current) return false
+      stateRef.current = next
+      queryClient.setQueryData(queryKey, next)
+      setError(undefined)
+      pendingSavesRef.current += 1
+      setSaving(true)
+      saveQueueRef.current = saveQueueRef.current
+        .then(() => saveOperations(next))
+        .catch((reason: unknown) => {
+          setError(
+            reason instanceof Error ? reason.message : 'No se han podido guardar los cambios.',
+          )
+        })
+        .finally(() => {
+          pendingSavesRef.current -= 1
+          if (pendingSavesRef.current === 0) setSaving(false)
+        })
+      return true
+    },
+    [queryClient, queryKey],
+  )
 
   const value = useMemo<OperationsContextValue>(
     () => ({
       state,
       mode,
-      loading: mode === 'supabase' && query.isPending,
+      loading: mode === 'supabase' && isPending,
       saving,
-      error: error ?? (query.isError ? 'No se han podido cargar los datos.' : undefined),
+      error: error ?? (isError ? 'No se han podido cargar los datos.' : undefined),
       clearError: () => setError(undefined),
       refresh: async () => {
-        await query.refetch()
+        await refetch()
       },
       assign: async (orderId, driverId) => {
         if (!commit((value) => assignOrder(value, orderId, driverId))) {
@@ -108,7 +113,7 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
       deleteDriver: (driverId) => commit((current) => removeDriver(current, driverId)),
       reset: () => commit(() => createSeedState()),
     }),
-    [commit, error, mode, query.isError, query.isPending, query.refetch, saving, state],
+    [commit, error, isError, isPending, mode, refetch, saving, state],
   )
 
   return <OperationsContext value={value}>{children}</OperationsContext>

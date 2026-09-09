@@ -86,7 +86,27 @@ export function formatScheduledAt(value: string): string {
 
 export function buildWhatsAppUrl(order: PickupOrder, driver: Driver): string {
   const passengers = order.passengerCount === 1 ? '1 pasajero' : `${order.passengerCount} pasajeros`
-  const message = `Hola ${driver.name.split(' ')[0]}, tienes un ${order.serviceType.toLocaleLowerCase('es')} el ${formatScheduledAt(order.scheduledAt)}: ${order.pickupAddress}, ${order.pickupCity} → ${order.deliveryAddress}, ${order.deliveryCity}. ${passengers}; equipaje: ${order.luggage}. Referencia ${order.reference}.`
+  const route = order.journeys
+    .map((journey, index) => {
+      const instructions = [
+        journey.originInstructions && `origen: ${journey.originInstructions}`,
+        journey.pickupInstructions && `recogida: ${journey.pickupInstructions}`,
+        journey.destinationInstructions && `destino: ${journey.destinationInstructions}`,
+        journey.expectedWait && `espera prevista: ${journey.expectedWait}`,
+      ]
+        .filter(Boolean)
+        .join('; ')
+      return `Trayecto ${index + 1}: ${journey.origin} → ${journey.destination}${instructions ? ` (${instructions})` : ''}`
+    })
+    .join('\n')
+  const notes = [
+    order.language && `Idioma: ${order.language}.`,
+    order.driverObservations && `Observaciones: ${order.driverObservations}.`,
+    order.waitHours && `Horas de espera: ${order.waitHours}.`,
+  ]
+    .filter(Boolean)
+    .join(' ')
+  const message = `Hola ${driver.name.split(' ')[0]}, tienes un ${order.serviceType.toLocaleLowerCase('es')} el ${formatScheduledAt(order.scheduledAt)}. ${passengers}; equipaje: ${order.luggage}. Referencia ${order.reference}.\n${route}\n${notes}`
   return `https://wa.me/${driver.phone}?text=${encodeURIComponent(message)}`
 }
 

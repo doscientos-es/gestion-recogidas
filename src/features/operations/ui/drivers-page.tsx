@@ -14,11 +14,11 @@ import { Link } from '@tanstack/react-router'
 import { ArrowLeft, Pencil, Phone, Plus, Search, Trash2, X } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 
+import { loadDriversPage } from '..'
 import { paginateDrivers, type DriverPage } from '../application/driver-queries'
 import { useOperations } from '../application/operations-context'
 import { defaultTravelSearch } from '../application/travel-search'
 import type { Driver } from '../application/types'
-import { loadDriversPage } from '../infrastructure/operations-repository'
 
 function initialsFor(name: string): string {
   return (

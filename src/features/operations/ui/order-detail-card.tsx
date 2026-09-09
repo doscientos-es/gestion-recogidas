@@ -1,5 +1,16 @@
 import { Button, Label } from '@doscientos/ui'
-import { BriefcaseBusiness, CalendarClock, Mail, MailCheck, MessageCircle, Pencil, Phone, Route, UsersRound, WalletCards } from 'lucide-react'
+import {
+  BriefcaseBusiness,
+  CalendarClock,
+  Mail,
+  MailCheck,
+  MessageCircle,
+  Pencil,
+  Phone,
+  Route,
+  UsersRound,
+  WalletCards,
+} from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
 
 import { useOperations } from '../application/operations-context'
@@ -53,11 +64,7 @@ export function OrderDetailCard({ order }: { order: PickupOrder }) {
               label="Pasajeros"
               value={order.passengerCount ? `${order.passengerCount} pasajeros` : 'No indicado'}
             />
-            <Info
-              icon={<BriefcaseBusiness aria-hidden />}
-              label="Equipaje"
-              value={order.luggage}
-            />
+            <Info icon={<BriefcaseBusiness aria-hidden />} label="Equipaje" value={order.luggage} />
             <Info
               icon={<WalletCards aria-hidden />}
               label="Importe"
@@ -243,14 +250,16 @@ function PassengerServiceDetails({ order }: { order: PickupOrder }) {
     ? order.journeys
     : [{ origin: order.pickupAddress, destination: order.deliveryAddress }]
   return (
-    <div className="space-y-3 rounded-xl border bg-muted/30 p-4">
+    <div className="bg-muted/30 space-y-3 rounded-xl border p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Servicio</p>
+          <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+            Servicio
+          </p>
           <p className="mt-1 font-medium">{order.serviceType}</p>
         </div>
         {order.childSeatCount ? (
-          <span className="rounded-full bg-background px-2.5 py-1 text-xs">
+          <span className="bg-background rounded-full px-2.5 py-1 text-xs">
             {order.childSeatCount} silla infantil
           </span>
         ) : null}
@@ -277,7 +286,19 @@ function PassengerServiceDetails({ order }: { order: PickupOrder }) {
           {order.preferences}
         </p>
       ) : null}
-      {journeys.length > 1 ? (
+      {order.language ? (
+        <p className="text-sm">
+          <span className="font-medium">Idioma preferente: </span>
+          {order.language}
+        </p>
+      ) : null}
+      {order.driverObservations ? (
+        <p className="text-sm">
+          <span className="font-medium">Observaciones para el conductor: </span>
+          {order.driverObservations}
+        </p>
+      ) : null}
+      {journeys.length > 1 || journeys.some(hasJourneyDetails) ? (
         <div className="border-t pt-3">
           <p className="flex items-center gap-1.5 text-sm font-medium">
             <Route aria-hidden className="size-4" />
@@ -289,8 +310,23 @@ function PassengerServiceDetails({ order }: { order: PickupOrder }) {
                 <span className="font-medium">{index + 1}. </span>
                 {journey.origin} → {journey.destination}
                 {journey.pickupInstructions ? (
-                  <span className="block pl-4 text-muted-foreground">
-                    {journey.pickupInstructions}
+                  <span className="text-muted-foreground block pl-4">
+                    Recogida: {journey.pickupInstructions}
+                  </span>
+                ) : null}
+                {journey.originInstructions ? (
+                  <span className="text-muted-foreground block pl-4">
+                    Origen: {journey.originInstructions}
+                  </span>
+                ) : null}
+                {journey.destinationInstructions ? (
+                  <span className="text-muted-foreground block pl-4">
+                    Destino: {journey.destinationInstructions}
+                  </span>
+                ) : null}
+                {journey.expectedWait ? (
+                  <span className="text-muted-foreground block pl-4">
+                    Espera prevista: {journey.expectedWait}
                   </span>
                 ) : null}
               </li>
@@ -303,6 +339,55 @@ function PassengerServiceDetails({ order }: { order: PickupOrder }) {
           {journeys[0].pickupInstructions}
         </p>
       ) : null}
+      <PricingDetails order={order} />
+      {order.waitingConditions ? (
+        <details className="border-t pt-3 text-sm">
+          <summary className="cursor-pointer font-medium">
+            Condiciones de las horas de espera
+          </summary>
+          <p className="text-muted-foreground mt-2 leading-6">{order.waitingConditions}</p>
+        </details>
+      ) : null}
+    </div>
+  )
+}
+
+function hasJourneyDetails(order: PickupOrder['journeys'][number]): boolean {
+  return Boolean(
+    order.pickupInstructions ||
+    order.originInstructions ||
+    order.destinationInstructions ||
+    order.expectedWait,
+  )
+}
+
+function PricingDetails({ order }: { order: PickupOrder }) {
+  const amounts: [string, number | undefined][] = [
+    ['Precio trayecto/s', order.journeyAmountCents],
+    ['Precio extras', order.extrasAmountCents],
+    ['Precio hora de espera', order.waitRateCents],
+    ['Importe horas de espera', order.waitAmountCents],
+  ]
+  if (!order.waitHours && !amounts.some(([, amount]) => amount !== undefined)) return null
+  return (
+    <div className="border-t pt-3 text-sm">
+      <p className="font-medium">Desglose del servicio</p>
+      <dl className="text-muted-foreground mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-2">
+        {order.waitHours ? (
+          <div className="flex justify-between gap-2">
+            <dt>Horas de espera</dt>
+            <dd>{order.waitHours}</dd>
+          </div>
+        ) : null}
+        {amounts.map(([label, amount]) =>
+          amount !== undefined ? (
+            <div key={label} className="flex justify-between gap-2">
+              <dt>{label}</dt>
+              <dd>{formatMoney(amount)}</dd>
+            </div>
+          ) : null,
+        )}
+      </dl>
     </div>
   )
 }

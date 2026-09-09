@@ -50,7 +50,9 @@ const seedState: OperationsState = {
       passengerCount: 3,
       luggage: '3 maletas de cabina',
       passengerPhone: '34600000179',
-      journeys: [{ origin: 'Carrer Montserrat, 112', destination: 'Terminal 1, Aeropuerto de Barcelona' }],
+      journeys: [
+        { origin: 'Carrer Montserrat, 112', destination: 'Terminal 1, Aeropuerto de Barcelona' },
+      ],
       amountCents: 19800,
       source: 'email',
       status: 'assigned',

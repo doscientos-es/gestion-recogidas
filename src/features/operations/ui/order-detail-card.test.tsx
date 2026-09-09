@@ -77,4 +77,32 @@ describe('OrderDetailCard', () => {
     await user.selectOptions(screen.getByLabelText('Cambiar conductor'), 'driver-laura')
     expect(submit).toBeEnabled()
   })
+
+  it('muestra instrucciones y desglose de un servicio con espera', () => {
+    render(
+      <OrderDetailCard
+        order={{
+          ...order,
+          language: 'Catalán',
+          waitHours: '2h',
+          journeyAmountCents: 50000,
+          waitAmountCents: 2400,
+          journeys: [
+            {
+              origin: 'Calle 1',
+              destination: 'Calle 2',
+              destinationInstructions: 'Principal',
+              expectedWait: '3h',
+            },
+          ],
+        }}
+      />,
+    )
+
+    expect(screen.getByText('Idioma preferente:')).toBeInTheDocument()
+    expect(screen.getByText('Destino: Principal')).toBeInTheDocument()
+    expect(screen.getByText('Espera prevista: 3h')).toBeInTheDocument()
+    expect(screen.getByText('Desglose del servicio')).toBeInTheDocument()
+    expect(screen.getByText(/500,00/)).toBeInTheDocument()
+  })
 })

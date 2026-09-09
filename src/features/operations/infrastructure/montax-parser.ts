@@ -1,15 +1,36 @@
 import type { JourneyLeg, PickupOrder } from '../application/types'
 
 function value(text: string, label: string): string {
-  const match = text.match(new RegExp(`(?:^|\\n)${label}[ \\t]*:?[ \\t]*(.*)`, 'i'))
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const match = text.match(new RegExp(`(?:^|\\n)${escapedLabel}[ \\t]*:[ \\t]*(.*)`, 'i'))
   return match?.[1]?.trim() ?? ''
 }
 
 function clean(text: string) {
   return text
     .replace(/\u00a0/g, ' ')
-    .replace(/\r/g, '')
+    .replace(/\r/g, '\n')
+    .replace(/[○•][ \t]*/g, '\n')
+    .replace(/\*([^*]+)\*/g, '\n$1\n')
+    .replace(/\s+(TRAYECTOS)\s*:/gi, '\n$1:')
+    .replace(
+      /\s+(LUGAR\s+DE\s+(?:ORIGEN|DESTINO)\/INSTRUCCIONES|TIEMPO\s+ESPERA\s+PREVISTO)\s*:/gi,
+      '\n$1:',
+    )
+    .replace(/[ \t]*\n[ \t]*/g, '\n')
     .replace(/[ ]{2,}/g, ' ')
+}
+
+function section(text: string, heading: string, nextHeadings: string[]): string {
+  const escapedHeading = heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const next = nextHeadings.map((item) => item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
+  const match = text.match(
+    new RegExp(
+      `(?:^|\\n)${escapedHeading}[ \\t]*:?[ \\t]*\\n?([\\s\\S]*?)(?=\\n(?:${next})[ \\t]*:|$)`,
+      'i',
+    ),
+  )
+  return match?.[1]?.replace(/\n+/g, ' ').trim() ?? ''
 }
 
 function extractTrayectos(text: string): JourneyLeg[] {
@@ -21,9 +42,18 @@ function extractTrayectos(text: string): JourneyLeg[] {
   for (let i = 1; i < bloques.length; i++) {
     const bloque = bloques[i]
     if (!bloque) continue
-    const origenMatch = bloque.match(/ORIGEN\s*:?\s*(.+?)(?=LUGAR|DESTINO|TRAYECTO|EXTRAS|PREFERENCIAS|PRECIO|$)/is)
-    const destinoMatch = bloque.match(/DESTINO\s*:?\s*(.+?)(?=LUGAR|TRAYECTO|EXTRAS|PREFERENCIAS|PRECIO|$)/is)
-    const recogidaMatch = bloque.match(/LUGAR\s+DE\s+RECOGIDA\s*:?\s*(.+?)(?=TRAYECTO|EXTRAS|PREFERENCIAS|PRECIO|$)/is)
+    const origenMatch = bloque.match(
+      /ORIGEN\s*:?\s*(.+?)(?=LUGAR|DESTINO|TRAYECTO|EXTRAS|PREFERENCIAS|PRECIO|$)/is,
+    )
+    const destinoMatch = bloque.match(
+      /DESTINO\s*:?\s*(.+?)(?=LUGAR|TRAYECTO|EXTRAS|PREFERENCIAS|PRECIO|$)/is,
+    )
+    const recogidaMatch = bloque.match(
+      /LUGAR\s+DE\s+RECOGIDA\s*:?\s*(.+?)(?=TRAYECTO|EXTRAS|PREFERENCIAS|PRECIO|$)/is,
+    )
+    const origenInstructions = value(bloque, 'LUGAR DE ORIGEN/INSTRUCCIONES')
+    const destinationInstructions = value(bloque, 'LUGAR DE DESTINO/INSTRUCCIONES')
+    const expectedWait = value(bloque, 'TIEMPO ESPERA PREVISTO')
 
     const origen = origenMatch?.[1]?.trim() ?? ''
     const destinoRaw = destinoMatch?.[1]?.trim() ?? ''
@@ -36,6 +66,9 @@ function extractTrayectos(text: string): JourneyLeg[] {
         origin: origen,
         destination: destino,
         ...(pickupInstructions ? { pickupInstructions } : {}),
+        ...(origenInstructions ? { originInstructions: origenInstructions } : {}),
+        ...(destinationInstructions ? { destinationInstructions } : {}),
+        ...(expectedWait ? { expectedWait } : {}),
       })
     }
   }
@@ -43,13 +76,12 @@ function extractTrayectos(text: string): JourneyLeg[] {
   return trayectos
 }
 
-function extractImporteTotal(text: string): number {
-  const match = text.match(/IMPORTE\s+TOTAL\s+DEL\s+SERVICIO\s*:?\s*([\d.,]+)/i)
-  const rawImporte = match?.[1]
-  if (!rawImporte) return 0
+function extractAmount(text: string, label: string): number | undefined {
+  const rawImporte = value(text, label).match(/^[\d.,]+/)?.[0]
+  if (!rawImporte) return undefined
   const importe = rawImporte.replace(/\./g, '').replace(',', '.')
   const euros = parseFloat(importe)
-  return Number.isNaN(euros) ? 0 : Math.round(euros * 100)
+  return Number.isNaN(euros) ? undefined : Math.round(euros * 100)
 }
 
 function extractTelefono(text: string): string {
@@ -92,9 +124,20 @@ export function parseMontaxEmail(input: {
   const passengerCount = extractCount(raw, ['Nº PAX', 'NUMERO DE PASAJEROS']) ?? 0
   const telefono = extractTelefono(raw)
   const passengerEmail = value(raw, 'EMAIL')
-  const luggage = firstValue(raw, ['EQUIPAJE', 'Nº MALETAS', 'NUMERO DE MALETAS', 'MALETAS', 'MALETERO'])
+  const luggage = firstValue(raw, [
+    'EQUIPAJE',
+    'Nº MALETAS',
+    'NUMERO DE MALETAS',
+    'MALETAS',
+    'MALETERO',
+  ])
   const preferences = value(raw, 'PREFERENCIAS')
+  const language = value(raw, 'IDIOMA')
   const childSeatCount = extractCount(raw, ['ASIENTO INFANTIL', 'SILLAS INFANTILES'])
+  const driverObservations = section(raw, 'OBSERVACIONES PARA EL CONDUCTOR', [
+    'DATOS DE LA RESERVA',
+  ])
+  const waitingConditions = section(raw, 'REFERENTE A LAS HORAS DE ESPERA', [])
 
   let scheduledAt = new Date().toISOString()
   if (date && time) {
@@ -108,7 +151,12 @@ export function parseMontaxEmail(input: {
     }
   }
 
-  const amountCents = extractImporteTotal(raw)
+  const amountCents = extractAmount(raw, 'IMPORTE TOTAL DEL SERVICIO') ?? 0
+  const waitHours = value(raw, 'HORAS DE ESPERA')
+  const waitRateCents = extractAmount(raw, 'PRECIO HORAS ESPERA (EUR/HORA)')
+  const waitAmountCents = extractAmount(raw, 'IMPORTE HORAS ESPERA')
+  const journeyAmountCents = extractAmount(raw, 'IMPORTE TRAYECTO/S')
+  const extrasAmountCents = extractAmount(raw, 'IMPORTE EXTRAS')
 
   return {
     id: `montax-${input.emailId}`,
@@ -125,7 +173,15 @@ export function parseMontaxEmail(input: {
     ...(telefono ? { passengerPhone: telefono } : {}),
     ...(passengerEmail ? { passengerEmail } : {}),
     ...(preferences ? { preferences } : {}),
+    ...(language ? { language } : {}),
     ...(childSeatCount ? { childSeatCount } : {}),
+    ...(driverObservations ? { driverObservations } : {}),
+    ...(waitHours ? { waitHours } : {}),
+    ...(waitRateCents !== undefined ? { waitRateCents } : {}),
+    ...(waitAmountCents !== undefined ? { waitAmountCents } : {}),
+    ...(journeyAmountCents !== undefined ? { journeyAmountCents } : {}),
+    ...(extrasAmountCents !== undefined ? { extrasAmountCents } : {}),
+    ...(waitingConditions ? { waitingConditions } : {}),
     journeys: trayectos.length ? trayectos : [{ origin, destination }],
     amountCents,
     source: 'email',
