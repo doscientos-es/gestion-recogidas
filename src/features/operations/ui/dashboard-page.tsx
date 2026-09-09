@@ -30,6 +30,7 @@ import { formatMoney, formatScheduledAt } from '../application/workflow'
 import { StatusBadge } from './status-badge'
 
 const chartColors = ['#0f5963', '#2382a5', '#31a0a9', '#b97518', '#687b7d']
+const fallbackChartColor = '#0f5963'
 
 export function DashboardPage() {
   const { state } = useOperations()
@@ -138,7 +139,7 @@ export function DashboardPage() {
                     {metrics.serviceBreakdown.map((service, index) => (
                       <Cell
                         key={service.name}
-                        fill={chartColors[index % chartColors.length] ?? chartColors[0]}
+                        fill={chartColors[index % chartColors.length] ?? fallbackChartColor}
                       />
                     ))}
                   </Pie>
