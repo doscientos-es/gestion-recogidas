@@ -29,11 +29,7 @@ import { defaultTravelSearch } from '@/features/operations/application/travel-se
 
 function BrandMark({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <Link
-      to="/dashboard"
-      className="brand-mark"
-      onClick={onNavigate}
-    >
+    <Link to="/dashboard" className="brand-mark" onClick={onNavigate}>
       <span className="flex flex-col gap-0.5">
         <strong>Gestión</strong>
         <small>Automática</small>
@@ -126,7 +122,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
     })
   return (
     <AppShell sidebarBreakpoint="lg" className="bg-muted/35 h-svh overflow-hidden">
-      <AppShellSidebar width="compact" aria-label="Navegación de escritorio">
+      <AppShellSidebar aria-label="Navegación de escritorio">
         <div className="app-sidebar-header">
           <BrandMark />
         </div>
@@ -139,12 +135,16 @@ export function AppFrame({ children }: { children: ReactNode }) {
       </AppShellSidebar>
       <AppShellMain>
         <AppShellMobileHeader className="justify-between">
+          <button
+            type="button"
+            className="mobile-menu-trigger"
+            aria-label="Abrir menú"
+            aria-expanded={navigationOpen}
+            onClick={() => setNavigationOpen(true)}
+          >
+            <Menu aria-hidden />
+          </button>
           <Drawer
-            trigger={
-              <button type="button" className="mobile-menu-trigger" aria-label="Abrir menú">
-                <Menu aria-hidden />
-              </button>
-            }
             isOpen={navigationOpen}
             onOpenChange={setNavigationOpen}
             side="left"

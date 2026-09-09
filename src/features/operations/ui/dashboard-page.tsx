@@ -8,6 +8,7 @@ import {
 } from '@doscientos/ui'
 import { Link } from '@tanstack/react-router'
 import { CalendarClock, CircleDollarSign, Inbox, UserRoundPlus, Users } from 'lucide-react'
+import type { ReactNode } from 'react'
 import {
   Area,
   AreaChart,
@@ -21,10 +22,10 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import type { ReactNode } from 'react'
 
 import { dashboardMetrics } from '../application/dashboard-metrics'
 import { useOperations } from '../application/operations-context'
+import { defaultTravelSearch } from '../application/travel-search'
 import { formatMoney, formatScheduledAt } from '../application/workflow'
 import { StatusBadge } from './status-badge'
 
@@ -42,15 +43,23 @@ export function DashboardPage() {
             Estado de la operativa compartida y de los próximos servicios.
           </PageHeaderDescription>
         </PageHeaderHeading>
-        <Link to="/viajes" className="action-link">
+        <Link to="/viajes" search={{ ...defaultTravelSearch }} className="action-link">
           <Inbox aria-hidden />
           Ver viajes
         </Link>
       </PageHeader>
 
       <section className="dashboard-metrics" aria-label="Indicadores operativos">
-        <Metric icon={<CalendarClock aria-hidden />} label="Viajes recibidos" value={metrics.totalOrders} />
-        <Metric icon={<UserRoundPlus aria-hidden />} label="Por asignar" value={metrics.pendingOrders} />
+        <Metric
+          icon={<CalendarClock aria-hidden />}
+          label="Viajes recibidos"
+          value={metrics.totalOrders}
+        />
+        <Metric
+          icon={<UserRoundPlus aria-hidden />}
+          label="Por asignar"
+          value={metrics.pendingOrders}
+        />
         <Metric icon={<Inbox aria-hidden />} label="Nuevos por revisar" value={metrics.newOrders} />
         <Metric
           icon={<CircleDollarSign aria-hidden />}
@@ -64,7 +73,9 @@ export function DashboardPage() {
           <CardContent className="dashboard-card-content">
             <div>
               <h2 className="text-sm font-semibold">Carga de servicios</h2>
-              <p className="text-muted-foreground mt-1 text-xs">Próximos días con viajes y pendientes.</p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Próximos días con viajes y pendientes.
+              </p>
             </div>
             <div className="dashboard-chart" role="img" aria-label="Carga de servicios por día">
               <ResponsiveContainer width="100%" height="100%">
@@ -105,9 +116,15 @@ export function DashboardPage() {
           <CardContent className="dashboard-card-content">
             <div>
               <h2 className="text-sm font-semibold">Tipos de servicio</h2>
-              <p className="text-muted-foreground mt-1 text-xs">Distribución de los viajes recibidos.</p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Distribución de los viajes recibidos.
+              </p>
             </div>
-            <div className="dashboard-chart" role="img" aria-label="Distribución por tipo de servicio">
+            <div
+              className="dashboard-chart"
+              role="img"
+              aria-label="Distribución por tipo de servicio"
+            >
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -119,7 +136,10 @@ export function DashboardPage() {
                     paddingAngle={3}
                   >
                     {metrics.serviceBreakdown.map((service, index) => (
-                      <Cell key={service.name} fill={chartColors[index % chartColors.length]} />
+                      <Cell
+                        key={service.name}
+                        fill={chartColors[index % chartColors.length] ?? chartColors[0]}
+                      />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -137,11 +157,13 @@ export function DashboardPage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-sm font-semibold">Próximos servicios</h2>
-                <p className="text-muted-foreground mt-1 text-xs">Los cinco siguientes en la planificación.</p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Los cinco siguientes en la planificación.
+                </p>
               </div>
               <Users aria-hidden className="text-muted-foreground size-4" />
             </div>
-            <div className="divide-y divide-border">
+            <div className="divide-border divide-y">
               {metrics.upcomingOrders.map((order) => (
                 <div key={order.id} className="flex items-center justify-between gap-3 py-3">
                   <div className="min-w-0">
@@ -154,7 +176,9 @@ export function DashboardPage() {
                 </div>
               ))}
               {metrics.upcomingOrders.length === 0 ? (
-                <p className="text-muted-foreground py-8 text-center text-sm">No hay servicios próximos.</p>
+                <p className="text-muted-foreground py-8 text-center text-sm">
+                  No hay servicios próximos.
+                </p>
               ) : null}
             </div>
           </CardContent>
@@ -164,7 +188,9 @@ export function DashboardPage() {
           <CardContent className="dashboard-card-content">
             <div>
               <h2 className="text-sm font-semibold">Actividad reciente</h2>
-              <p className="text-muted-foreground mt-1 text-xs">Últimos cambios de la bandeja compartida.</p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Últimos cambios de la bandeja compartida.
+              </p>
             </div>
             <ol className="space-y-4">
               {state.activity.slice(0, 5).map((item) => (
@@ -185,7 +211,15 @@ export function DashboardPage() {
   )
 }
 
-function Metric({ icon, label, value }: { icon: ReactNode; label: string; value: number | string }) {
+function Metric({
+  icon,
+  label,
+  value,
+}: {
+  icon: ReactNode
+  label: string
+  value: number | string
+}) {
   return (
     <Card>
       <CardContent className="dashboard-metric">

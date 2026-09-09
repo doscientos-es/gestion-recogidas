@@ -35,11 +35,16 @@ function dayLabel(day: string): string {
     .replace('.', '')
 }
 
-export function dashboardMetrics(state: OperationsState, referenceDate = new Date()): DashboardMetrics {
+export function dashboardMetrics(
+  state: OperationsState,
+  referenceDate = new Date(),
+): DashboardMetrics {
   const sortedOrders = [...state.orders].sort((left, right) =>
     left.scheduledAt.localeCompare(right.scheduledAt),
   )
-  const serviceDays = [...new Set(sortedOrders.map(serviceDay).filter((day) => /^\d{4}-\d{2}-\d{2}$/.test(day)))].sort()
+  const serviceDays = [
+    ...new Set(sortedOrders.map(serviceDay).filter((day) => /^\d{4}-\d{2}-\d{2}$/.test(day))),
+  ].sort()
   const today = dateKey(referenceDate)
   const selectedDays = serviceDays.filter((day) => day >= today).slice(0, 7)
   const displayedDays = selectedDays.length > 0 ? selectedDays : serviceDays.slice(0, 7)

@@ -48,8 +48,8 @@ describe('AppFrame', () => {
     )
 
     expect(container.querySelector('[data-slot="app-shell-sidebar"]')).toHaveAttribute(
-      'data-width',
-      'compact',
+      'aria-label',
+      'Navegación de escritorio',
     )
     expect(screen.getByRole('link', { name: 'Facturación' })).toHaveAttribute(
       'href',
