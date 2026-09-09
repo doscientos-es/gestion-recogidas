@@ -415,7 +415,12 @@ function Pagination({
   return (
     <nav className="pagination-bar" aria-label="Paginación de viajes">
       <p className="text-muted-foreground text-sm">
-        {total} {total === 1 ? 'viaje' : 'viajes'} · página {page} de {pageCount}
+        <span className="pagination-summary-compact">
+          P. {page}/{pageCount}
+        </span>
+        <span className="pagination-summary-full">
+          {total} {total === 1 ? 'viaje' : 'viajes'} · página {page} de {pageCount}
+        </span>
       </p>
       <div className="pagination-controls">
         <button
@@ -436,7 +441,7 @@ function Pagination({
             <button
               type="button"
               key={item}
-              className={`pagination-button ${item === page ? 'pagination-active' : ''}`}
+              className={`pagination-button pagination-page-shortcut ${item === page ? 'pagination-active' : ''}`}
               onClick={() => onPageChange(item)}
               disabled={item === page}
               aria-current={item === page ? 'page' : undefined}
