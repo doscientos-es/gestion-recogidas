@@ -1,5 +1,5 @@
 import { createBrowserSupabaseClient } from '../../../shared/lib/supabase/client'
-import { DRIVER_PAGE_SIZE, type DriverPage } from '../application/driver-queries'
+import { DRIVER_PAGE_SIZE, type DriverPage, type DriverSort } from '../application/driver-queries'
 import type { Driver, OperationsState, PickupOrder } from '../application/types'
 import { createSeedState } from './seed-state'
 
@@ -184,13 +184,18 @@ export async function saveOperations(state: OperationsState): Promise<void> {
   if (result.error) throw new Error('No se han podido guardar los cambios en Supabase.')
 }
 
-export async function loadDriversPage(search: string, page: number): Promise<DriverPage> {
+export async function loadDriversPage(
+  search: string,
+  page: number,
+  sort: DriverSort = 'name_asc',
+): Promise<DriverPage> {
   const client = createBrowserSupabaseClient()
   await ensureAuthenticated()
   const result = await client.rpc('get_drivers_page', {
     requested_page: page,
     requested_page_size: DRIVER_PAGE_SIZE,
     search_text: search.trim(),
+    sort_by: sort,
   })
   if (result.error) throw new Error('No se han podido recuperar los conductores.')
 

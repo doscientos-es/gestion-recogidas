@@ -11,11 +11,26 @@ import {
   PageHeaderTitle,
 } from '@doscientos/ui'
 import { Link } from '@tanstack/react-router'
-import { ArrowLeft, Pencil, Phone, Plus, Search, Trash2, X } from 'lucide-react'
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Pencil,
+  Phone,
+  Plus,
+  Search,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 
 import { loadDriversPage } from '..'
-import { paginateDrivers, type DriverPage } from '../application/driver-queries'
+import {
+  DRIVER_PAGE_SIZE,
+  paginateDrivers,
+  type DriverPage,
+  type DriverSort,
+} from '../application/driver-queries'
 import { useOperations } from '../application/operations-context'
 import { defaultTravelSearch } from '../application/travel-search'
 import type { Driver } from '../application/types'
@@ -39,18 +54,19 @@ export function DriversPage() {
   const [editingId, setEditingId] = useState<string>()
   const [searchDraft, setSearchDraft] = useState('')
   const [search, setSearch] = useState('')
+  const [sort, setSort] = useState<DriverSort>('name_asc')
   const [page, setPage] = useState(1)
   const [driversRevision, setDriversRevision] = useState(0)
   const [remotePage, setRemotePage] = useState<{ key: string; value: DriverPage }>()
   const [remoteError, setRemoteError] = useState<string>()
-  const localPage = paginateDrivers(state.drivers, search, page)
-  const remoteKey = `${search}\u0000${page}\u0000${driversRevision}`
+  const localPage = paginateDrivers(state.drivers, search, page, sort)
+  const remoteKey = `${search}\u0000${sort}\u0000${page}\u0000${driversRevision}`
 
   useEffect(() => {
     if (saving) return
     let active = true
     setRemoteError(undefined)
-    void loadDriversPage(search, page)
+    void loadDriversPage(search, page, sort)
       .then((result) => {
         if (active) setRemotePage({ key: remoteKey, value: result })
       })
@@ -65,7 +81,7 @@ export function DriversPage() {
     return () => {
       active = false
     }
-  }, [page, remoteKey, saving, search])
+  }, [page, remoteKey, saving, search, sort])
 
   const driversPage = remotePage?.key === remoteKey ? remotePage.value : localPage
 
@@ -109,7 +125,7 @@ export function DriversPage() {
           onCancel={() => setCreating(false)}
         />
       ) : null}
-      <form className="flex flex-wrap items-end gap-2" onSubmit={submitSearch}>
+      <form className="driver-search-toolbar" onSubmit={submitSearch}>
         <div className="min-w-60 flex-1">
           <label className="field-label" htmlFor="driver-search">
             Buscar conductores
@@ -121,6 +137,24 @@ export function DriversPage() {
             placeholder="Nombre, teléfono o email"
             onChange={(event) => setSearchDraft(event.target.value)}
           />
+        </div>
+        <div className="min-w-48">
+          <label className="field-label" htmlFor="driver-sort">
+            Ordenar conductores
+          </label>
+          <select
+            id="driver-sort"
+            className="field-control w-full"
+            value={sort}
+            onChange={(event) => {
+              setPage(1)
+              setSort(event.target.value as DriverSort)
+            }}
+          >
+            <option value="name_asc">Nombre: A–Z</option>
+            <option value="name_desc">Nombre: Z–A</option>
+            <option value="internal_first">De la casa primero</option>
+          </select>
         </div>
         <Button type="submit" variant="outline">
           <Search aria-hidden />
@@ -198,6 +232,7 @@ export function DriversPage() {
         <DriverPagination
           page={driversPage.page}
           pageCount={driversPage.pageCount}
+          total={driversPage.total}
           onChange={setPage}
         />
       )}
@@ -208,34 +243,71 @@ export function DriversPage() {
 function DriverPagination({
   page,
   pageCount,
+  total,
   onChange,
 }: {
   page: number
   pageCount: number
+  total: number
   onChange: (page: number) => void
 }) {
   if (pageCount <= 1) return null
+  const pages = Array.from(
+    { length: Math.min(pageCount, 5) },
+    (_, index) => Math.max(1, Math.min(page - 2, pageCount - 4)) + index,
+  )
+  const firstDriver = (page - 1) * DRIVER_PAGE_SIZE + 1
+  const lastDriver = Math.min(page * DRIVER_PAGE_SIZE, total)
   return (
-    <nav aria-label="Paginación de conductores" className="flex items-center justify-center gap-3">
-      <Button
-        type="button"
-        variant="outline"
-        onPress={() => onChange(page - 1)}
-        isDisabled={page === 1}
-      >
-        Anterior
-      </Button>
-      <span className="text-muted-foreground text-sm">
-        Página {page} de {pageCount}
-      </span>
-      <Button
-        type="button"
-        variant="outline"
-        onPress={() => onChange(page + 1)}
-        isDisabled={page === pageCount}
-      >
-        Siguiente
-      </Button>
+    <nav aria-label="Paginación de conductores" className="driver-pagination">
+      <div className="driver-pagination-summary">
+        <strong>
+          Página {page} de {pageCount}
+        </strong>
+        <span>
+          Mostrando {firstDriver}–{lastDriver} de {total} conductores
+        </span>
+      </div>
+      <div className="driver-pagination-controls">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label="Página anterior"
+          onPress={() => onChange(page - 1)}
+          isDisabled={page === 1}
+        >
+          <ChevronLeft aria-hidden />
+          <span className="driver-pagination-label">Anterior</span>
+        </Button>
+        <div className="driver-pagination-pages" aria-label="Páginas disponibles">
+          {pages.map((item) => (
+            <Button
+              key={item}
+              type="button"
+              variant="outline"
+              size="sm"
+              className={item === page ? 'driver-pagination-page-active' : undefined}
+              aria-label={`Ir a la página ${item}`}
+              {...(item === page ? { 'aria-current': 'page' as const } : {})}
+              onPress={() => onChange(item)}
+            >
+              {item}
+            </Button>
+          ))}
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label="Página siguiente"
+          onPress={() => onChange(page + 1)}
+          isDisabled={page === pageCount}
+        >
+          <span className="driver-pagination-label">Siguiente</span>
+          <ChevronRight aria-hidden />
+        </Button>
+      </div>
     </nav>
   )
 }

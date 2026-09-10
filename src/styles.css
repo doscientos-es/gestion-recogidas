@@ -466,6 +466,63 @@ select {
   padding: 0.45rem 0.65rem;
   font-size: 0.85rem;
 }
+.driver-search-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.5rem;
+}
+.driver-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, var(--border));
+  border-radius: 0.85rem;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 45%, var(--card)),
+    var(--card)
+  );
+  padding: 0.8rem 0.9rem;
+}
+.driver-pagination-summary {
+  display: grid;
+  gap: 0.15rem;
+}
+.driver-pagination-summary strong {
+  color: var(--primary);
+  font-size: 0.85rem;
+}
+.driver-pagination-summary span {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+.driver-pagination-controls,
+.driver-pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.driver-pagination-pages button {
+  min-width: 2rem;
+}
+.driver-pagination-pages .driver-pagination-page-active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+@media (max-width: 640px) {
+  .driver-pagination-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .driver-pagination-label {
+    display: none;
+  }
+}
 .action-link {
   display: inline-flex;
   min-height: 2.25rem;

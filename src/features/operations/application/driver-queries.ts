@@ -1,6 +1,7 @@
 import type { Driver } from './types'
 
 export const DRIVER_PAGE_SIZE = 12
+export type DriverSort = 'name_asc' | 'name_desc' | 'internal_first'
 
 export interface DriverPage {
   drivers: Driver[]
@@ -13,6 +14,7 @@ export function paginateDrivers(
   drivers: Driver[],
   search: string,
   requestedPage: number,
+  sort: DriverSort = 'name_asc',
 ): DriverPage {
   const normalizedSearch = search.trim().toLocaleLowerCase('es-ES')
   const filtered = normalizedSearch
@@ -22,10 +24,16 @@ export function paginateDrivers(
         ),
       )
     : drivers
-  const total = filtered.length
+  const sorted = [...filtered].sort((first, second) => {
+    if (sort === 'internal_first' && first.isExternal !== second.isExternal)
+      return Number(first.isExternal) - Number(second.isExternal)
+    const compared = first.name.localeCompare(second.name, 'es-ES')
+    return sort === 'name_desc' ? -compared : compared
+  })
+  const total = sorted.length
   const pageCount = Math.max(1, Math.ceil(total / DRIVER_PAGE_SIZE))
   const page = Math.min(Math.max(1, requestedPage), pageCount)
   const start = (page - 1) * DRIVER_PAGE_SIZE
 
-  return { drivers: filtered.slice(start, start + DRIVER_PAGE_SIZE), page, pageCount, total }
+  return { drivers: sorted.slice(start, start + DRIVER_PAGE_SIZE), page, pageCount, total }
 }

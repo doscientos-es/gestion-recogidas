@@ -39,6 +39,14 @@ vi.mock('../application/operations-context', () => ({
           initials: 'LV',
           isExternal: true,
         },
+        ...Array.from({ length: 11 }, (_, index) => ({
+          id: `driver-${index + 1}`,
+          name: `Conductor ${index + 1}`,
+          phone: `34600000${String(index + 1).padStart(3, '0')}`,
+          email: `conductor-${index + 1}@example.test`,
+          initials: `C${index + 1}`,
+          isExternal: false,
+        })),
       ],
     },
   }),
@@ -54,7 +62,7 @@ describe('DriversPage', () => {
   it('shows whether each driver is internal or external', () => {
     render(<DriversPage />)
 
-    expect(screen.getByText('De la casa')).toBeInTheDocument()
+    expect(screen.getAllByText('De la casa').length).toBeGreaterThan(0)
     expect(screen.getByText('Externo')).toBeInTheDocument()
   })
 
@@ -67,6 +75,31 @@ describe('DriversPage', () => {
 
     expect(screen.getByText('Marc Soler')).toBeInTheDocument()
     expect(screen.queryByText('Laura Vidal')).not.toBeInTheDocument()
+  })
+
+  it('offers sorting next to the driver search', async () => {
+    const user = userEvent.setup()
+    render(<DriversPage />)
+
+    const sort = screen.getByLabelText('Ordenar conductores')
+    await user.selectOptions(sort, 'name_desc')
+
+    expect(sort).toHaveValue('name_desc')
+    expect(screen.getByRole('option', { name: 'De la casa primero' })).toBeInTheDocument()
+  })
+
+  it('makes pagination visible and lets users jump to a page', async () => {
+    const user = userEvent.setup()
+    render(<DriversPage />)
+
+    expect(
+      screen.getByRole('navigation', { name: 'Paginación de conductores' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Mostrando 1–12 de 13 conductores')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Ir a la página 2' }))
+    expect(screen.getByText('Página 2 de 2')).toBeInTheDocument()
+    expect(screen.getByText('Mostrando 13–13 de 13 conductores')).toBeInTheDocument()
   })
 
   it('creates an external driver from the form', async () => {
