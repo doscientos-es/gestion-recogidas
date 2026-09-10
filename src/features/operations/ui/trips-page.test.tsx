@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest'
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
@@ -265,16 +265,21 @@ describe('TripsPage - navegación por teclado', () => {
   })
 
   it('aplica el acceso rápido para filtrar el mes natural anterior', async () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date(2026, 8, 10, 12))
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    const today = new Date()
+    const expectedFrom = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+    const expectedTo = new Date(today.getFullYear(), today.getMonth(), 0)
+    const dateInputValue = (date: Date) =>
+      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+        date.getDate(),
+      ).padStart(2, '0')}`
+    const user = userEvent.setup()
     render(<Harness />)
 
     await user.click(screen.getByRole('button', { name: 'Mostrar filtros' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Último mes' }))
+    await user.click(screen.getByRole('button', { name: 'Último mes' }))
 
-    expect(screen.getByLabelText('Desde')).toHaveValue('2026-08-01')
-    expect(screen.getByLabelText('Hasta')).toHaveValue('2026-08-31')
+    expect(screen.getByLabelText('Desde')).toHaveValue(dateInputValue(expectedFrom))
+    expect(screen.getByLabelText('Hasta')).toHaveValue(dateInputValue(expectedTo))
   })
 
   it('las flechas recorren los tabs de estado y activan la pestaña enfocada', async () => {
