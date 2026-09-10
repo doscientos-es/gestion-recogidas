@@ -29,10 +29,10 @@ as $$
       driver.value ->> 'email' as email,
       driver.value ->> 'initials' as initials,
       driver.value ->> 'isExternal' = 'true' as is_external
-    from public.demo_workspaces workspace
+    from public.shared_operations workspace
     cross join lateral jsonb_array_elements(coalesce(workspace.state -> 'drivers', '[]'::jsonb)) driver
     cross join params
-    where workspace.owner_id = auth.uid()
+    where workspace.id
       and (
         params.search is null
         or concat_ws(' ', driver.value ->> 'name', driver.value ->> 'phone', driver.value ->> 'email')
@@ -82,3 +82,7 @@ as $$
     'page', (select page from pagination)
   );
 $$;
+
+revoke all on function public.get_drivers_page(text, integer, integer, text) from public;
+revoke all on function public.get_drivers_page(text, integer, integer, text) from anon;
+grant execute on function public.get_drivers_page(text, integer, integer, text) to authenticated;
