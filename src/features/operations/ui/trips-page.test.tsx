@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest'
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
@@ -70,6 +70,7 @@ afterEach(() => {
   markRead.mockClear()
   cleanup()
   vi.unstubAllGlobals()
+  vi.useRealTimers()
 })
 
 vi.mock('../application/operations-context', () => ({
@@ -261,6 +262,19 @@ describe('TripsPage - navegación por teclado', () => {
     await user.selectOptions(source, 'manual')
 
     expect(source).toHaveValue('manual')
+  })
+
+  it('aplica el acceso rápido para filtrar el mes natural anterior', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 8, 10, 12))
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    render(<Harness />)
+
+    await user.click(screen.getByRole('button', { name: 'Mostrar filtros' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Último mes' }))
+
+    expect(screen.getByLabelText('Desde')).toHaveValue('2026-08-01')
+    expect(screen.getByLabelText('Hasta')).toHaveValue('2026-08-31')
   })
 
   it('las flechas recorren los tabs de estado y activan la pestaña enfocada', async () => {

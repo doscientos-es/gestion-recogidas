@@ -10,6 +10,8 @@ describe('parseTravelSearch', () => {
         status: 'assigned',
         source: 'email',
         city: ' Mataró ',
+        from: '2026-09-01',
+        to: '2026-09-30',
         sort: 'amount_desc',
         page: '2',
         selected: ' ord-1 ',
@@ -20,6 +22,8 @@ describe('parseTravelSearch', () => {
       status: 'assigned',
       source: 'email',
       city: 'Mataró',
+      from: '2026-09-01',
+      to: '2026-09-30',
       sort: 'amount_desc',
       page: 2,
       selected: 'ord-1',
@@ -35,4 +39,9 @@ describe('parseTravelSearch', () => {
     expect(parseTravelSearch({ selected: 42 }).selected).toBe(''))
   it('defaults an invalid compose flag to closed', () =>
     expect(parseTravelSearch({ compose: 'yes' }).compose).toBe(false))
+  it('ignores malformed calendar dates', () =>
+    expect(parseTravelSearch({ from: '2026-02-30', to: '09/30/2026' })).toMatchObject({
+      from: '',
+      to: '',
+    }))
 })

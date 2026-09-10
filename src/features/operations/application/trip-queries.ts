@@ -23,6 +23,9 @@ export function queryTrips(orders: PickupOrder[], search: TravelSearch): TripQue
       return false
     if (search.source !== 'all' && order.source !== search.source) return false
     if (search.city && order.pickupCity !== search.city) return false
+    const scheduledDate = localDate(order.scheduledAt)
+    if (search.from && scheduledDate < search.from) return false
+    if (search.to && scheduledDate > search.to) return false
     if (
       query &&
       !`${order.reference} ${order.customer} ${order.pickupCity} ${order.deliveryCity}`
@@ -63,4 +66,10 @@ function comparator(sort: TravelSearch['sort']): (left: PickupOrder, right: Pick
     default:
       return (left, right) => left.scheduledAt.localeCompare(right.scheduledAt)
   }
+}
+
+function localDate(value: string): string {
+  const date = new Date(value)
+  const pad = (part: number) => String(part).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }

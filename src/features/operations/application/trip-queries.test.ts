@@ -80,6 +80,17 @@ describe('trip queries', () => {
     expect(result.rows.map((order) => order.id)).toEqual(['2', '3'])
   })
 
+  it('filters pickup dates inclusively within the selected range', () => {
+    const result = queryTrips(orders, {
+      ...defaultTravelSearch,
+      from: '2026-09-09',
+      to: '2026-09-09',
+    })
+
+    expect(result.rows.map((order) => order.id)).toEqual(['3'])
+    expect(result.total).toBe(1)
+  })
+
   it('sorts by schedule, amount and reference', () => {
     expect(queryTrips(orders, defaultTravelSearch).rows.map((order) => order.id)).toEqual([
       '2',

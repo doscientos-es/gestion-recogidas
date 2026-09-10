@@ -46,6 +46,17 @@ const statusTabs = [
 
 const desktopLayoutQuery = '(min-width: 1024px)'
 
+function dateInputValue(date: Date): string {
+  const pad = (part: number) => String(part).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+function lastMonthRange(today = new Date()): Pick<TravelSearch, 'from' | 'to'> {
+  const from = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+  const to = new Date(today.getFullYear(), today.getMonth(), 0)
+  return { from: dateInputValue(from), to: dateInputValue(to) }
+}
+
 function useDesktopLayout() {
   return useSyncExternalStore(
     (onStoreChange) => {
@@ -253,6 +264,67 @@ export function TripsPage({
                         <option value="email">Importados por correo</option>
                         <option value="manual">Alta manual</option>
                       </select>
+                    </div>
+                    <div>
+                      <span className="field-label">Fecha de recogida</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="sr-only" htmlFor="trip-date-from">
+                            Desde
+                          </label>
+                          <input
+                            id="trip-date-from"
+                            className="field-control w-full"
+                            type="date"
+                            value={search.from}
+                            onChange={(event) =>
+                              onSearchChange({
+                                from: event.target.value,
+                                page: 1,
+                                selected: '',
+                              })
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="sr-only" htmlFor="trip-date-to">
+                            Hasta
+                          </label>
+                          <input
+                            id="trip-date-to"
+                            className="field-control w-full"
+                            type="date"
+                            value={search.to}
+                            onChange={(event) =>
+                              onSearchChange({ to: event.target.value, page: 1, selected: '' })
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-2 flex gap-2">
+                        <Button
+                          size="sm"
+                          type="button"
+                          variant="outline"
+                          onClick={() =>
+                            onSearchChange({ ...lastMonthRange(), page: 1, selected: '' })
+                          }
+                        >
+                          Último mes
+                        </Button>
+                        {search.from || search.to ? (
+                          <Button
+                            size="sm"
+                            type="button"
+                            variant="ghost"
+                            onClick={() =>
+                              onSearchChange({ from: '', to: '', page: 1, selected: '' })
+                            }
+                          >
+                            Limpiar fechas
+                          </Button>
+                        ) : null}
+                      </div>
                     </div>
                     {cities.length > 1 ? (
                       <div>

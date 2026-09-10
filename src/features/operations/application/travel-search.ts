@@ -10,11 +10,17 @@ const sort = z.enum([
   'reference_asc',
 ])
 
+const date = z.string().trim().refine(isCalendarDate)
+
 export type TravelSearch = {
   q: string
   status: z.infer<typeof status>
   source: z.infer<typeof source>
   city: string
+  /** Fecha de recogida inicial, en formato AAAA-MM-DD. */
+  from: string
+  /** Fecha de recogida final, en formato AAAA-MM-DD. */
+  to: string
   sort: z.infer<typeof sort>
   page: number
   /** Viaje abierto en el panel de detalle. Vacío significa «ningún viaje seleccionado». */
@@ -28,6 +34,8 @@ export const defaultTravelSearch: TravelSearch = {
   status: 'all',
   source: 'all',
   city: '',
+  from: '',
+  to: '',
   sort: 'scheduled_asc',
   page: 1,
   selected: '',
@@ -44,6 +52,8 @@ export function parseTravelSearch(value: unknown): TravelSearch {
       status: status.catch('all'),
       source: source.catch('all'),
       city: z.string().trim().max(80).catch(''),
+      from: date.catch(''),
+      to: date.catch(''),
       sort: sort.catch('scheduled_asc'),
       page: z.coerce.number().int().min(1).catch(1),
       selected: z.string().trim().max(80).catch(''),
@@ -51,4 +61,15 @@ export function parseTravelSearch(value: unknown): TravelSearch {
     })
     .safeParse(value)
   return result.success ? result.data : defaultTravelSearch
+}
+
+function isCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const [year, month, day] = value.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day))
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  )
 }
